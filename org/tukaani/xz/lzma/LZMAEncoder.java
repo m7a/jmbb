@@ -10,6 +10,7 @@
 
 package org.tukaani.xz.lzma;
 
+import java.io.IOException;
 import org.tukaani.xz.lz.LZEncoder;
 import org.tukaani.xz.lz.Matches;
 import org.tukaani.xz.rangecoder.RangeEncoder;
@@ -112,7 +113,7 @@ public abstract class LZMAEncoder extends LZMACoder {
      * cares about the second highest bit.
      */
     public static int getDistSlot(int dist) {
-        if (dist <= DIST_MODEL_START)
+        if (dist <= DIST_MODEL_START && dist >= 0)
             return dist;
 
         int n = dist;
@@ -205,23 +206,51 @@ public abstract class LZMAEncoder extends LZMACoder {
     }
 
     /**
+     * Compress for LZMA1.
+     */
+    public void encodeForLZMA1() throws IOException {
+        if (!lz.isStarted() && !encodeInit())
+            return;
+
+        while (encodeSymbol()) {}
+    }
+
+    public void encodeLZMA1EndMarker() throws IOException {
+        // End of stream marker is encoded as a match with the maximum
+        // possible distance. The length is ignored by the decoder,
+        // but the minimum length has been used by the LZMA SDK.
+        //
+        // Distance is a 32-bit unsigned integer in LZMA.
+        // With Java's signed int, UINT32_MAX becomes -1.
+        int posState = (lz.getPos() - readAhead) & posMask;
+        rc.encodeBit(isMatch[state.get()], posState, 1);
+        rc.encodeBit(isRep, state.get(), 0);
+        encodeMatch(-1, MATCH_LEN_MIN, posState);
+    }
+
+    /**
      * Compresses for LZMA2.
      *
      * @return      true if the LZMA2 chunk became full, false otherwise
      */
     public boolean encodeForLZMA2() {
-        if (!lz.isStarted() && !encodeInit())
-            return false;
-
-        while (uncompressedSize <= LZMA2_UNCOMPRESSED_LIMIT
-                && rc.getPendingSize() <= LZMA2_COMPRESSED_LIMIT)
-            if (!encodeSymbol())
+        // LZMA2 uses RangeEncoderToBuffer so IOExceptions aren't possible.
+        try {
+            if (!lz.isStarted() && !encodeInit())
                 return false;
+
+            while (uncompressedSize <= LZMA2_UNCOMPRESSED_LIMIT
+                    && rc.getPendingSize() <= LZMA2_COMPRESSED_LIMIT)
+                if (!encodeSymbol())
+                    return false;
+        } catch (IOException e) {
+            throw new Error();
+        }
 
         return true;
     }
 
-    private boolean encodeInit() {
+    private boolean encodeInit() throws IOException {
         assert readAhead == -1;
         if (!lz.hasEnoughData(0))
             return false;
@@ -242,7 +271,7 @@ public abstract class LZMAEncoder extends LZMACoder {
         return true;
     }
 
-    private boolean encodeSymbol() {
+    private boolean encodeSymbol() throws IOException {
         if (!lz.hasEnoughData(readAhead + 1))
             return false;
 
@@ -279,7 +308,8 @@ public abstract class LZMAEncoder extends LZMACoder {
         return true;
     }
 
-    private void encodeMatch(int dist, int len, int posState) {
+    private void encodeMatch(int dist, int len, int posState)
+            throws IOException {
         state.updateMatch();
         matchLenEncoder.encode(len, posState);
 
@@ -311,7 +341,8 @@ public abstract class LZMAEncoder extends LZMACoder {
         --distPriceCount;
     }
 
-    private void encodeRepMatch(int rep, int len, int posState) {
+    private void encodeRepMatch(int rep, int len, int posState)
+            throws IOException {
         if (rep == 0) {
             rc.encodeBit(isRep0, state.get(), 0);
             rc.encodeBit(isRep0Long[state.get()], posState, len == 1 ? 0 : 1);
@@ -494,7 +525,7 @@ public abstract class LZMAEncoder extends LZMACoder {
 
 
     class LiteralEncoder extends LiteralCoder {
-        LiteralSubencoder[] subencoders;
+        private final LiteralSubencoder[] subencoders;
 
         LiteralEncoder(int lc, int lp) {
             super(lc, lp);
@@ -509,7 +540,7 @@ public abstract class LZMAEncoder extends LZMACoder {
                 subencoders[i].reset();
         }
 
-        void encodeInit() {
+        void encodeInit() throws IOException {
             // When encoding the first byte of the stream, there is
             // no previous byte in the dictionary so the encode function
             // wouldn't work.
@@ -517,7 +548,7 @@ public abstract class LZMAEncoder extends LZMACoder {
             subencoders[0].encode();
         }
 
-        void encode() {
+        void encode() throws IOException {
             assert readAhead >= 0;
             int i = getSubcoderIndex(lz.getByte(1 + readAhead),
                                      lz.getPos() - readAhead);
@@ -538,7 +569,7 @@ public abstract class LZMAEncoder extends LZMACoder {
         }
 
         private class LiteralSubencoder extends LiteralSubcoder {
-            void encode() {
+            void encode() throws IOException {
                 int symbol = lz.getByte(readAhead) | 0x100;
 
                 if (state.isLiteral()) {
@@ -649,7 +680,7 @@ public abstract class LZMAEncoder extends LZMACoder {
                 counters[i] = 0;
         }
 
-        void encode(int len, int posState) {
+        void encode(int len, int posState) throws IOException {
             len -= MATCH_LEN_MIN;
 
             if (len < LOW_SYMBOLS) {

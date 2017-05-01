@@ -24,6 +24,7 @@ public class IndexEncoder extends IndexBase {
         super(new XZIOException("XZ Stream or its Index has grown too big"));
     }
 
+    @SuppressWarnings("unchecked")
     public void add(long unpaddedSize, long uncompressedSize)
             throws XZIOException {
         super.add(unpaddedSize, uncompressedSize);

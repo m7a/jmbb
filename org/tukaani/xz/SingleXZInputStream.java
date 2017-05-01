@@ -41,13 +41,26 @@ import org.tukaani.xz.check.Check;
  */
 public class SingleXZInputStream extends InputStream {
     private InputStream in;
-    private int memoryLimit;
-    private StreamFlags streamHeaderFlags;
-    private Check check;
+    private final int memoryLimit;
+    private final StreamFlags streamHeaderFlags;
+    private final Check check;
+    private final boolean verifyCheck;
     private BlockInputStream blockDecoder = null;
     private final IndexHash indexHash = new IndexHash();
     private boolean endReached = false;
     private IOException exception = null;
+
+    private final byte[] tempBuf = new byte[1];
+
+    /**
+     * Reads the Stream Header into a buffer.
+     * This is a helper function for the constructors.
+     */
+    private static byte[] readStreamHeader(InputStream in) throws IOException {
+        byte[] streamHeader = new byte[DecoderUtil.STREAM_HEADER_SIZE];
+        new DataInputStream(in).readFully(streamHeader);
+        return streamHeader;
+    }
 
     /**
      * Creates a new XZ decompressor that decompresses exactly one
@@ -77,7 +90,7 @@ public class SingleXZInputStream extends InputStream {
      * @throws      IOException may be thrown by <code>in</code>
      */
     public SingleXZInputStream(InputStream in) throws IOException {
-        initialize(in, -1);
+        this(in, -1);
     }
 
     /**
@@ -112,25 +125,71 @@ public class SingleXZInputStream extends InputStream {
      */
     public SingleXZInputStream(InputStream in, int memoryLimit)
             throws IOException {
-        initialize(in, memoryLimit);
+        this(in, memoryLimit, true, readStreamHeader(in));
     }
 
-    SingleXZInputStream(InputStream in, int memoryLimit,
+    /**
+     * Creates a new XZ decompressor that decompresses exactly one
+     * XZ Stream from <code>in</code> with an optional memory usage limit
+     * and ability to disable verification of integrity checks.
+     * <p>
+     * This is identical to <code>SingleXZInputStream(InputStream,int)</code>
+     * except that this takes also the <code>verifyCheck</code> argument.
+     * <p>
+     * Note that integrity check verification should almost never be disabled.
+     * Possible reasons to disable integrity check verification:
+     * <ul>
+     *   <li>Trying to recover data from a corrupt .xz file.</li>
+     *   <li>Speeding up decompression. This matters mostly with SHA-256
+     *   or with files that have compressed extremely well. It's recommended
+     *   that integrity checking isn't disabled for performance reasons
+     *   unless the file integrity is verified externally in some other
+     *   way.</li>
+     * </ul>
+     * <p>
+     * <code>verifyCheck</code> only affects the integrity check of
+     * the actual compressed data. The CRC32 fields in the headers
+     * are always verified.
+     *
+     * @param       in          input stream from which XZ-compressed
+     *                          data is read
+     *
+     * @param       memoryLimit memory usage limit in kibibytes (KiB)
+     *                          or <code>-1</code> to impose no
+     *                          memory usage limit
+     *
+     * @param       verifyCheck if <code>true</code>, the integrity checks
+     *                          will be verified; this should almost never
+     *                          be set to <code>false</code>
+     *
+     * @throws      XZFormatException
+     *                          input is not in the XZ format
+     *
+     * @throws      CorruptedInputException
+     *                          XZ header CRC32 doesn't match
+     *
+     * @throws      UnsupportedOptionsException
+     *                          XZ header is valid but specifies options
+     *                          not supported by this implementation
+     *
+     * @throws      EOFException
+     *                          less than 12 bytes of input was available
+     *                          from <code>in</code>
+     *
+     * @throws      IOException may be thrown by <code>in</code>
+     *
+     * @since 1.6
+     */
+    public SingleXZInputStream(InputStream in, int memoryLimit,
+                               boolean verifyCheck) throws IOException {
+        this(in, memoryLimit, verifyCheck, readStreamHeader(in));
+    }
+
+    SingleXZInputStream(InputStream in, int memoryLimit, boolean verifyCheck,
                         byte[] streamHeader) throws IOException {
-        initialize(in, memoryLimit, streamHeader);
-    }
-
-    private void initialize(InputStream in, int memoryLimit)
-            throws IOException {
-        byte[] streamHeader = new byte[DecoderUtil.STREAM_HEADER_SIZE];
-        new DataInputStream(in).readFully(streamHeader);
-        initialize(in, memoryLimit, streamHeader);
-    }
-
-    private void initialize(InputStream in, int memoryLimit,
-                            byte[] streamHeader) throws IOException {
         this.in = in;
         this.memoryLimit = memoryLimit;
+        this.verifyCheck = verifyCheck;
         streamHeaderFlags = DecoderUtil.decodeStreamHeader(streamHeader);
         check = Check.getInstance(streamHeaderFlags.checkType);
     }
@@ -175,8 +234,7 @@ public class SingleXZInputStream extends InputStream {
      * @throws      IOException may be thrown by <code>in</code>
      */
     public int read() throws IOException {
-        byte[] buf = new byte[1];
-        return read(buf, 0, 1) == -1 ? -1 : (buf[0] & 0xFF);
+        return read(tempBuf, 0, 1) == -1 ? -1 : (tempBuf[0] & 0xFF);
     }
 
     /**
@@ -236,7 +294,7 @@ public class SingleXZInputStream extends InputStream {
                 if (blockDecoder == null) {
                     try {
                         blockDecoder = new BlockInputStream(
-                                in, check, memoryLimit, -1, -1);
+                                in, check, verifyCheck, memoryLimit, -1, -1);
                     } catch (IndexIndicatorException e) {
                         indexHash.validate(in);
                         validateStreamFooter();

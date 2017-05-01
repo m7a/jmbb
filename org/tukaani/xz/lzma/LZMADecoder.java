@@ -13,7 +13,6 @@ package org.tukaani.xz.lzma;
 import java.io.IOException;
 import org.tukaani.xz.lz.LZDecoder;
 import org.tukaani.xz.rangecoder.RangeDecoder;
-import org.tukaani.xz.CorruptedInputException;
 
 public final class LZMADecoder extends LZMACoder {
     private final LZDecoder lz;
@@ -37,6 +36,16 @@ public final class LZMADecoder extends LZMACoder {
         repLenDecoder.reset();
     }
 
+    /**
+     * Returns true if LZMA end marker was detected. It is encoded as
+     * the maximum match distance which with signed ints becomes -1. This
+     * function is needed only for LZMA1. LZMA2 doesn't use the end marker
+     * in the LZMA layer.
+     */
+    public boolean endMarkerDetected() {
+        return reps[0] == -1;
+    }
+
     public void decode() throws IOException {
         lz.repeatPending();
 
@@ -49,14 +58,15 @@ public final class LZMADecoder extends LZMACoder {
                 int len = rc.decodeBit(isRep, state.get()) == 0
                           ? decodeMatch(posState)
                           : decodeRepMatch(posState);
+
+                // NOTE: With LZMA1 streams that have the end marker,
+                // this will throw CorruptedInputException. LZMAInputStream
+                // handles it specially.
                 lz.repeat(reps[0], len);
             }
         }
 
         rc.normalize();
-
-        if (!rc.isInBufferOK())
-            throw new CorruptedInputException();
     }
 
     private int decodeMatch(int posState) throws IOException {
@@ -121,7 +131,7 @@ public final class LZMADecoder extends LZMACoder {
 
 
     private class LiteralDecoder extends LiteralCoder {
-        LiteralSubdecoder[] subdecoders;
+        private final LiteralSubdecoder[] subdecoders;
 
         LiteralDecoder(int lc, int lp) {
             super(lc, lp);
