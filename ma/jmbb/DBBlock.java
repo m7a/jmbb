@@ -192,6 +192,7 @@ class DBBlock {
 			throw new NotImplementedException();
 	}
 
+	// TODO z might it be necessary to call transformToDB before putting to map?
 	void fillRedundantProcessingData(Map<String,DBFile> s,
 							Map<String,DBFile> o) {
 		for(DBFile i: files) {

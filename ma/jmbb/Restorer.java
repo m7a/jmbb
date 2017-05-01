@@ -59,7 +59,7 @@ class Restorer {
 		if(mode == RestorationMode.LIST_VERSIONS_ONLY)
 			listVersionsOnly(entries);
 		else
-			restoreNewest(db, entries);
+			restoreNewest(db, entries, version != -1);
 	}
 
 	/**
@@ -142,9 +142,11 @@ class Restorer {
 			entries.next().print(o);
 	}
 
-	private void restoreNewest(DB db, Iterator<REntry> entries)
+	private void restoreNewest(DB db, Iterator<REntry> entries,
+						boolean considerObsolete)
 						throws MBBFailureException {
-		Map<Long, RGroup> tab = newTableOfFilesGroupBlocks(entries);
+		Map<Long, RGroup> tab = newTableOfFilesGroupBlocks(entries,
+							considerObsolete);
 
 		for(RGroup i: tab.values()) {
 			try {
@@ -158,20 +160,22 @@ class Restorer {
 	}
 
 	private static Map<Long, RGroup> newTableOfFilesGroupBlocks(
-						Iterator<REntry> entries) {
+						Iterator<REntry> entries,
+						boolean considerObsolete) {
 		// TreeMap => sort by block id.
 		Map<Long, RGroup> retTable = new TreeMap<Long, RGroup>();
 
 		while(entries.hasNext())
-			addEntryToGroupTable(retTable, entries.next());
+			addEntryToGroupTable(retTable, entries.next(),
+							considerObsolete);
 
 		return retTable;
 	}
 
 	private static void addEntryToGroupTable(Map<Long, RGroup> tab,
-								REntry e) {
+					REntry e, boolean considerObsolete) {
 		RFileVersionEntry sel = e.getSelectedForRestoration();
-		if(sel == null) // File entry deprecated.
+		if(sel == null || (sel.file.isObsolete() && !considerObsolete))
 			return;
 
 		RGroup grp = tab.get(sel.inBlk.getId());

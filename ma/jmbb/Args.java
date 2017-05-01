@@ -90,8 +90,7 @@ class Args extends AbstractArgs { // TODO z Problem: MaArgs speaks German
 			RestorationMode.RESTORE_CONSISTENT,
 			new RestorationModeConverter(),
 			"Determines how to choose files for restoration:\n" +
-			"consistent tries to restore a consistent set of " +
-			"files.\nnew tries to restore the newest files " +
+			"new tries to restore the newest files " +
 			"available.\nlist only lists all versions of files." +
 			"You will normally use this in combination with a " +
 			"pattern."

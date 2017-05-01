@@ -62,6 +62,7 @@ class Editor {
 			new EditObsoleteBlock(o, db),
 			new EditShowStats(o, db),
 			new EditCheckConsistency(o, db),
+			new EditDuplicateCurrent(o, db),
 		};
 	}
 
@@ -134,7 +135,7 @@ class Editor {
 
 	private void printHelp() {
 		for(EditorCommand i: cmds)
-			o.printf("%-12s %s\n", i.getCommandName() + " " +
+			o.printf("%-13s %s\n", i.getCommandName() + " " +
 					i.getArgsString(), i.getDescription());
 	}
 

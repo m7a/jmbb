@@ -73,29 +73,16 @@ class REntry implements Iterable<RFileVersionEntry> {
 		);
 	}
 
-	/**
-	 * That is: the greatest version of the newest file entry.
-	 *
-	 * @return
-	 * 	If the file selected for restoration is deprecated,
-	 * 	this returns null.
-	 */
 	RFileVersionEntry getSelectedForRestoration() {
 		RFileVersionEntry sel = fileVersions.get(0);
 
-		for(RFileVersionEntry i: fileVersions) {
-			if(i.file.timestamp > sel.file.timestamp) {
+		for(RFileVersionEntry i: fileVersions)
+			if(i.file.timestamp > sel.file.timestamp ||
+					i.file.version > sel.file.version ||
+					i.inBlk.getId() > sel.inBlk.getId())
 				sel = i;
-			} else if(i.file.version > sel.file.version) {
-				sel = i;
-			}
-		}
 
-		if(sel.file.isObsolete()) {
-			return null;
-		} else {
-			return sel;
-		}
+		return sel;
 	}
 
 	@Override

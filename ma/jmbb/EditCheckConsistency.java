@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 class EditCheckConsistency extends EditorCommand {
 
-	public EditCheckConsistency(PrintfIO o, DB db) {
+	EditCheckConsistency(PrintfIO o, DB db) {
 		super(o, db);
 	}
 
@@ -16,29 +16,41 @@ class EditCheckConsistency extends EditorCommand {
 
 	@Override
 	public String getDescription() {
-		return "Finds out about duplicate version numbers.";
+		return "Detect duplicate version numbers.";
 	}
 
 	@Override
 	public void call(String[] args) throws Exception {
-		long numInc = 0;
+		findDuplicateVersionNumbers();
+	}
+
+	private void findDuplicateVersionNumbers() {
+		int numInc = 0;
+		int numFil = 0;
 		Map<String, REntry> rtbl = Restorer.createRestorePathTable(db,
 								null, -1);
 		for(REntry re: rtbl.values()) {
+			boolean hashdr = false;
 			Map<Integer,RFileVersionEntry> knownVersions =
 				new HashMap<Integer,RFileVersionEntry>();
 			for(RFileVersionEntry fe: re) {
 				int version = fe.file.version;
 				if(knownVersions.containsKey(version)) {
-					o.printf("Duplicate version of %s:\n",
+					if(!hashdr) {
+						o.printf("Duplicate version " +
+							"of %s:\n",
 							fe.file.getPath());
+						numFil++;
+						hashdr = true;
+					}
+					o.printf("  Version %d\n", version);
 					RFileVersionEntry oe =
 						knownVersions.get(version);
-					o.printf(" (%s) %s\n",
+					o.printf("    (%s) %s\n",
 						DBBlock.formatBlockIDNice(
 							oe.inBlk.getId()),
 						oe.file.formatXML());
-					o.printf(" (%s) %s\n",
+					o.printf("    (%s) %s\n",
 						DBBlock.formatBlockIDNice(
 							fe.inBlk.getId()),
 						fe.file.formatXML());
@@ -48,12 +60,23 @@ class EditCheckConsistency extends EditorCommand {
 				}
 			}
 		}
-		o.printf("%d inconsistencies detected.\n", numInc);
+		o.printf("%d duplicate version numbers for %d files " +
+						"detected.\n", numInc, numFil);
 	}
 
 	@Override
 	public void printDocumentation() {
-		o.printf("This is useful for debugging.");
+		o.printf("Duplicate version numbers should not occur with " +
+			"normal single-database operation.\n");
+		o.printf("In case the database was messed up, you can find " +
+			"duplicate version numbers using this command.\n");
+		o.printf("If you ever face duplicate version numbers, check " +
+			"if any of the output entries has\n");
+		o.printf("obsolete=\"false\". In that case, a backup-" +
+			"relevant file has a duplicate version which means\n");
+		o.printf("that your backup is likely to be inconsistent. " +
+			"In this case, you should test the backup ASAP.\n");
 	}
+
 
 }

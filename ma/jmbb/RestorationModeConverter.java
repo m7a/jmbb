@@ -27,7 +27,7 @@ class RestorationModeConverter implements TypeConverter<RestorationMode> {
 	}
 
 	public String getUsagePattern() {
-		return "consistent|new|list";
+		return "new|list";
 	}
 
 }
