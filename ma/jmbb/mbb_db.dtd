@@ -1,0 +1,36 @@
+<!ELEMENT db (blocks, passwords)> <!-- .......................... ROOT LEVEL -->
+<!ATTLIST db db_version CDATA #FIXED "1.1.0.0">
+<!ATTLIST db sep CDATA #FIXED "/">
+<!ATTLIST db chcksm CDATA #FIXED "SHA-256">
+<!ATTLIST db blocksize_kib CDATA "4096"> <!-- inner block size -->
+<!ATTLIST db timestamp CDATA #REQUIRED> <!-- When this DB was written -->
+
+<!ELEMENT blocks (block)*> <!-- ...................................... BLOCK -->
+
+<!ELEMENT block (file)*> <!-- block of only datewise changed files is empty -->
+<!ATTLIST block psswrd_id CDATA #REQUIRED>
+<!ATTLIST block blocksize CDATA #IMPLIED> <!-- not given => def. block size -->
+<!ATTLIST block chcksm CDATA #REQUIRED> <!-- "N/A" for directories or in blk -->
+<!ATTLIST block id ID #REQUIRED>
+<!ATTLIST block outward_size CDATA #REQUIRED>
+<!ATTLIST block timestamp CDATA #REQUIRED>
+<!ATTLIST block type (data | data-meta | meta | ctrl-var) "data">
+
+<!ELEMENT file EMPTY>
+<!ATTLIST file path CDATA #REQUIRED>
+<!ATTLIST file timestamp CDATA #REQUIRED> <!-- when this file was processed -->
+<!ATTLIST file chcksm CDATA #REQUIRED>
+<!ATTLIST file obsolete (true | false) "true">
+<!ATTLIST file size CDATA #REQUIRED>
+<!ATTLIST file mtime CDATA #REQUIRED> <!-- time of last modification -->
+<!ATTLIST file version CDATA #REQUIRED> <!-- update nn -->
+<!ATTLIST file mode CDATA #REQUIRED> <!-- permissions, fifo/dev/etc. -->
+<!ATTLIST file meta (true | false) "false"> <!-- is meta file -->
+
+<!ELEMENT passwords (password+)> <!-- ............................. PASSWORD -->
+
+<!ELEMENT password EMPTY>
+<!ATTLIST password val_hex CDATA #REQUIRED>
+<!ATTLIST password id CDATA #REQUIRED>
+<!ATTLIST password timestamp CDATA #REQUIRED>
+<!ATTLIST password state (deprecated | inactive | current) "deprecated">

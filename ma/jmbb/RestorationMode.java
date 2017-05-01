@@ -1,0 +1,7 @@
+package ma.jmbb;
+
+enum RestorationMode {
+
+	RESTORE_CONSISTENT, RESTORE_AS_NEW_AS_POSSIBLE, LIST_VERSIONS_ONLY
+
+}
