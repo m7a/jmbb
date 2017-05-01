@@ -35,11 +35,13 @@ class EditCheckConsistency extends EditorCommand {
 					RFileVersionEntry oe =
 						knownVersions.get(version);
 					o.printf(" (%s) %s\n",
-							oe.inBlk.getId(),
-							oe.file.formatXML());
+						DBBlock.formatBlockIDNice(
+							oe.inBlk.getId()),
+						oe.file.formatXML());
 					o.printf(" (%s) %s\n",
-							fe.inBlk.getId(),
-							fe.file.formatXML());
+						DBBlock.formatBlockIDNice(
+							fe.inBlk.getId()),
+						fe.file.formatXML());
 					numInc++;
 				} else {
 					knownVersions.put(version, fe);
