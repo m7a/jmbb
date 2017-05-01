@@ -61,10 +61,13 @@ class DBFile extends Stat {
 	}
 
 	void write(XMLWriter out) throws IOException {
+		out.txl(formatXML());
+	}
+
+	String formatXML() {
 		String obsoleteS = obsolete ? "true": "false";
 		String metaS = meta ? " meta=\"true\"": "";
-		out.txl(
-			"<file obsolete=\"" + obsoleteS +
+		return "<file obsolete=\"" + obsoleteS +
 			"\" timestamp=\"" + timestamp +
 			"\" mtime=\"" + modificationTime +
 			"\" version=\"" + version +
@@ -72,8 +75,7 @@ class DBFile extends Stat {
 			"\" mode=\"" + formatMode() +
 			"\" size=\"" + size + 
 			"\" path=\"" + StringUtils.htmlentities(getPath()) +
-			"\"" + metaS + "/>"
-		);
+			"\"" + metaS + "/>";
 	}
 
 	private String formatChecksum() {

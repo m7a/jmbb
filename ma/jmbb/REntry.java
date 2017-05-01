@@ -1,10 +1,11 @@
 package ma.jmbb;
 
+import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
 
-class REntry {
+class REntry implements Iterable<RFileVersionEntry> {
 
 	private static final String TIMESTAMP_MISMATCH =
 		"ERROR (non-failing): Different timestamps for the same " +
@@ -32,13 +33,17 @@ class REntry {
 	 * allows one to decide about wether to choose to restore this file.
 	 */
 	void print(PrintfIO o) {
-		Collections.sort(fileVersions, new FileVersionComparator());
+		sort();
 		final DBFile first = fileVersions.get(0).file;
 
 		printInformationHeader(o, first);
 		for(RFileVersionEntry i: fileVersions) {
 			print(o, i, first.timestamp);
 		}
+	}
+
+	void sort() {
+		Collections.sort(fileVersions, new FileVersionComparator());
 	}
 
 	private static void printInformationHeader(PrintfIO o, DBFile file) {
@@ -50,28 +55,20 @@ class REntry {
 							long commonTimestamp) {
 		if(i.file.timestamp != commonTimestamp) {
 			o.eprintf(TIMESTAMP_MISMATCH, i.file.timestamp,
-								commonTimestamp);
+							commonTimestamp);
 		}
 
 		print(o, i.file, i.inBlk.getId());
 	}
 
 	static void print(PrintfIO o, DBFile file, long blockId) {
-		String blkS;
-		if(blockId == -1) {
-			blkS = "";
-		} else {
-			blkS = String.format("0x%0" + DBBlock.FILENAME_ID_LEN +
-								"x ", blockId);
-		}
-
 		// Version, Modification Time, Size, Mode, (Block ID), Obsolete
-		o.printf("  %3d %s %6d %6o %s%s\n",
+		o.printf("  %3d %s %6d %6o %s %s\n",
 			file.version,
 			RDateFormatter.format(file.modificationTime),
 			file.size / 1024,
 			file.mode,
-			blkS,
+			DBBlock.formatBlockIDNice(blockId),
 			file.isObsolete() ? "obsolete": ""
 		);
 	}
@@ -99,6 +96,11 @@ class REntry {
 		} else {
 			return sel;
 		}
+	}
+
+	@Override
+	public Iterator<RFileVersionEntry> iterator() {
+		return fileVersions.iterator();
 	}
 
 	private class FileVersionComparator

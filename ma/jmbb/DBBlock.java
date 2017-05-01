@@ -89,7 +89,7 @@ class DBBlock {
 	}
 
 	static Path getFile(DB db, long id) {
-		String name = String.format("%0" + FILENAME_ID_LEN + "x", id);
+		String name = formatID(id);
 		String dir  = name.substring(0, FILENAME_MAKE_FOLDERS);
 		Path ret    = db.loc.resolve(SUBDIR);
 
@@ -99,6 +99,10 @@ class DBBlock {
 		}
 
 		return ret.resolve(name + ".cxe").toAbsolutePath();
+	}
+
+	private static String formatID(long id) {
+		return String.format("%0" + FILENAME_ID_LEN + "x", id);
 	}
 
 	static void createParentsIfNecessary(Path osFile)
@@ -307,6 +311,10 @@ class DBBlock {
 			n++;
 		}
 		o.printf("This block contains %d files.\n", n);
+	}
+
+	static String formatBlockIDNice(long blockID) {
+		return blockID == -1? "": formatID(blockID);
 	}
 
 }

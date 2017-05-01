@@ -61,6 +61,7 @@ class Editor {
 			new EditShowBlock(o, db),
 			new EditObsoleteBlock(o, db),
 			new EditShowStats(o, db),
+			new EditCheckConsistency(o, db),
 		};
 	}
 

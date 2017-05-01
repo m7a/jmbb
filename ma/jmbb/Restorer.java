@@ -68,7 +68,11 @@ class Restorer {
 	 */
 	private Map<String, REntry> createRestorePathTable(DB db) {
 		Pattern regex = compileRegex();
+		return createRestorePathTable(db, regex, version);
+	}
 
+	static Map<String, REntry> createRestorePathTable(DB db, Pattern regex,
+								int version) {
 		// Unsorted... we will sort after blocks later.
 		Map<String, REntry> rpt = new HashMap<String, REntry>();
 
@@ -76,7 +80,8 @@ class Restorer {
 			Iterator<DBFile> containedFiles = i.getFileIterator();
 			while(containedFiles.hasNext()) {
 				DBFile j = containedFiles.next();
-				addFileToRestorePathTable(rpt, regex, j, i);
+				addFileToRestorePathTable(rpt, regex, version,
+									j, i);
 			}
 		}
 
@@ -85,12 +90,14 @@ class Restorer {
 
 	/**
 	 * The result of this function is designed to be passed to
-	 * <code>addFileToRestorePathTable(Map, Pattern, DBFile)</code> and
-	 * <code>matchPattern(Pattern, DBFile)</code> which both accept null
-	 * values to be passed for a simple "all input is ok".
+	 * <code>addFileToRestorePathTable(Map, Pattern, int, DBFile,
+	 * DBBlock)</code> and <code>matchPattern(Pattern, DBFile)</code>
+	 * which both accept null values to be passed for a simple
+	 * "all input is ok".
 	 *
 	 * @return null if no pattern was wanted.
-	 * @see #addFileToRestorePathTable(Map<String, REntry>, Pattern, DBFile)
+	 * @see #addFileToRestorePathTable(Map<String, REntry>, Pattern, DBFile,
+	 * 	DBBlock)
 	 * @see #matchPattern(Pattern, DBFile)
 	 */
 	private Pattern compileRegex() {
@@ -101,13 +108,14 @@ class Restorer {
 	}
 
 	/**
-	 * Four parameters are bad but this function needed to be externalized.
+	 * Too many parameters but this function needed to be externalized.
 	 *
 	 * @param regex may be null if not used.
 	 */
-	private void addFileToRestorePathTable(Map<String, REntry> rpt,
-				Pattern regex, DBFile file, DBBlock inBlk) {
-		if(matchPattern(regex, file) && matchVersion(file) &&
+	private static void addFileToRestorePathTable(Map<String, REntry> rpt,
+						Pattern regex, int version,
+						DBFile file, DBBlock inBlk) {
+		if(matchPattern(regex, file) && matchVersion(version, file) &&
 							!file.isMeta()) {
 			REntry alreadyHave = rpt.get(file.getPath());
 			if(alreadyHave == null)
@@ -125,7 +133,7 @@ class Restorer {
 		return regex == null || regex.matcher(file.getPath()).matches();
 	}
 
-	private boolean matchVersion(DBFile file) {
+	private static boolean matchVersion(int version, DBFile file) {
 		return version == -1 || file.version == version;
 	}
 
