@@ -41,7 +41,7 @@ class BCNativeBlockCreatorProcess extends Thread {
 			obsoleteFilesInDB();
 		} catch(MBBFailureException ex) {
 			error = ex;
-		} catch(Exception ex) {
+		} catch(Throwable ex) {
 			error = new MBBFailureException(ex);
 		}
 	}

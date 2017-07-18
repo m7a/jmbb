@@ -64,7 +64,7 @@ class BackupCreator {
 
 		db = new BCDB(dst.toPath(), o);
 		db.initFromLoc();
-		db.createNonObsoleteRedundantDataStructure();
+		db.createRedundantUtilityDataStructure();
 
 		normalMaxBlockSize = db.header.getBlocksizeKiB() * 1024;
 		nextBlockFiles     = new ArrayList<BCChangedFile>();
@@ -101,7 +101,8 @@ class BackupCreator {
 
 	private void processStat(Stat s, boolean meta)
 						throws MBBFailureException {
-		BCChangedFile chg = db.acquireChangedFileIfNecessary(s, meta);
+		BCChangedFile chg = db.acquireChangedFileIfNecessary(s, meta,
+									o);
 		if(chg != null)
 			addToABlock(chg);
 	}

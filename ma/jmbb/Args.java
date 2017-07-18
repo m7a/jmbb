@@ -10,7 +10,7 @@ class Args extends AbstractArgs { // TODO z Problem: MaArgs speaks German
 
 	static final String APPLICATION_NAME =
 					"Java Ma_Sys.ma Block Based Backup";
-	static final String APPLICATION_VERSION = "1.0.1.5";
+	static final String APPLICATION_VERSION = "1.0.2.0";
 	static final String COPYRIGHT_YEARS = "2013, 2014, 2015, 2017";
 
 	final Parameter<File>            dstDatabase;

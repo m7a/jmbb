@@ -27,7 +27,7 @@ class DBHeader {
 
 	void write(XMLWriter out) throws IOException {
 		// Timestamp is updated on every write.
-		out.tol("<db db_version=\"1.1.0.0\" sep=\"" + sep +
+		out.tol("<db db_version=\"1.1.0.1\" sep=\"" + sep +
 			"\" chcksm=\"" + checksumingMethod +
 			"\" blocksize_kib=\"" + blocksizeKiB +
 			"\" timestamp=\"" + System.currentTimeMillis() +

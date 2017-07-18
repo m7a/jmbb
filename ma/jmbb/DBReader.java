@@ -90,6 +90,8 @@ class DBReader extends ErrorAwareXMLParser {
 				procBlock(attrs);
 			} else if(qName.equals("file")) {
 				currentBlock.addFile(new DBFile(attrs));
+			} else if(qName.equals("nte")) {
+				procNewTimeEntry(attrs);
 			} else if(qName.equals("password")) {
 				procPassword(attrs);
 			}
@@ -105,6 +107,11 @@ class DBReader extends ErrorAwareXMLParser {
 		} else {
 			currentBlock = new DBBlock(db, attrs);
 		}
+	}
+
+	private void procNewTimeEntry(Attributes attrs) {
+		db.times.putDeserialized(attrs.getValue("path"),
+				Long.parseLong(attrs.getValue("mtime")));
 	}
 
 	private void procPassword(Attributes attrs) throws MBBFailureException {

@@ -12,6 +12,8 @@ import ma.tools2.util.BinaryOperations;
  */
 class DBFile extends Stat {
 
+	private static final long NEW_TIME_NOT_SET = -1;
+
 	// String: makes it easier to replace one character with two...
 	private static final String CPIO_ESC = "\\";
 	private static final String[] CPIO_PATTERNS = { CPIO_ESC, "[", "?",
@@ -95,9 +97,11 @@ class DBFile extends Stat {
 	// already been created (checksum comparison only applies if all other
 	// metadata points to the file being different because it is
 	// performace-intensive to compute)
-	boolean logicalEquals(Stat s) {
-		return modificationTime == s.modificationTime &&
-							isMetadataEqual(s);
+	boolean logicalEquals(Stat s, DBNewTimes newTimes)
+			// TODO CATCH NON FATAL ERROR NONFATALLY
+			throws NonFatalDatabaseConsistencyViolationException {
+		return isMetadataEqual(s) && newTimes.getNewestKnownTimeFor(
+			getPath(), modificationTime) == s.modificationTime;
 	}
 
 	// Similar to logicalEquals(Stat) but does not compare modification time

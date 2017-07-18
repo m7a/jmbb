@@ -16,6 +16,7 @@ class DB {
 	final DBHeader    header;
 	final DBBlocks    blocks;
 	final DBPasswords passwords;
+	final DBNewTimes  times;
 	final int         xzPreset;
 	final PrintfIO    o;
 
@@ -25,6 +26,7 @@ class DB {
 		header    = new DBHeader();
 		blocks    = new DBBlocks();
 		passwords = new DBPasswords();
+		times     = new DBNewTimes();
 		xzPreset  = getXZPreset();
 		this.o    = o;
 	}
@@ -121,6 +123,7 @@ class DB {
 	private void writeData(XMLWriter out) throws IOException {
 		header.write(out);
 		blocks.write(out);
+		times.write(out);
 		passwords.write(out);
 	}
 

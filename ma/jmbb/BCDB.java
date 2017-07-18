@@ -13,6 +13,10 @@ import java.nio.file.Path;
  */
 class BCDB extends DB {
 
+	private static final String NON_FATAL_EMSG =
+		"Non-Fatal Database Consistency Violation (New Time " +
+		"Handling) detected. See below for a detailed error message:\n";
+
 	// Redundant processing data.
 	private HashMap<String,DBFile> nonObsolete;
 
@@ -40,14 +44,15 @@ class BCDB extends DB {
 						header.getBlocksizeKiB());
 	}
 
-	void createNonObsoleteRedundantDataStructure() {
+	void createRedundantUtilityDataStructure() {
 		nonObsolete    = new HashMap<String,DBFile>();
 		newestObsolete = new HashMap<String,DBFile>();
 		blocks.fillRedundantProcessingData(nonObsolete, newestObsolete);
 	}
 
-	BCChangedFile acquireChangedFileIfNecessary(final Stat s, boolean meta)
-						throws MBBFailureException {
+	// TODO z MESSY RESPONSIBILITY
+	BCChangedFile acquireChangedFileIfNecessary(final Stat s,
+			boolean meta, PrintfIO o) throws MBBFailureException {
 		// Removes file from map => afterwards only non-processed
 		//						files remain.
 		final String path = transformToDB(s.getPath());
@@ -62,19 +67,46 @@ class BCDB extends DB {
 			return new BCChangedFile(this, s,
 					newestObsolete.remove(path), meta);
 		} else {
-			if(prev.logicalEquals(s))
+			return acquireChangedFileWithPrevVersion(s, meta, o,
+								path, prev);
+		}
+	}
+
+	private BCChangedFile acquireChangedFileWithPrevVersion(Stat s,
+			boolean meta, PrintfIO o, String path, DBFile prev)
+			throws MBBFailureException {
+		try {
+			if(prev.logicalEquals(s, times))
 				return null;
+		} catch(NonFatalDatabaseConsistencyViolationException ex) {
+			o.edprintf(ex, NON_FATAL_EMSG);
+		}
 
-			// Checksum comparison happens here TODO single threaded
+		// Checksum comparison happens here TODO single threaded
 
-			BCChangedFile newVersion = new BCChangedFile(this, s,
-								prev, meta);
-			newVersion.checksumIfNecessary(this);
+		BCChangedFile newVersion = new BCChangedFile(this, s, prev,
+									meta);
+		newVersion.checksumIfNecessary(this);
 
-			if(newVersion.isContentwiseEqualToPreviousVersion())
-				return null;
-			else
-				return newVersion;
+		if(newVersion.isContentwiseEqualToPreviousVersion()) {
+			try {
+				times.updateTimeFileNotChanged(path,
+							s.modificationTime);
+			} catch(NonFatalDatabaseConsistencyViolationException
+									ex) {
+				o.edprintf(ex, NON_FATAL_EMSG);
+			}
+			return null;
+		} else {
+			try {
+				times.updateTimeFileChanged(newVersion.change.
+								getPath(),
+					newVersion.change.modificationTime);
+			} catch(NonFatalDatabaseConsistencyViolationException
+									ex) {
+				o.edprintf(ex, NON_FATAL_EMSG);
+			}
+			return newVersion;
 		}
 	}
 
