@@ -54,11 +54,6 @@ import ma.tools2.util.StringUtils;
  */
 class DBNewTimes implements Iterable<Map.Entry<String,Long>> {
 
-	private static String PLS_FIX_INCONSISTENCY =
-		"It is highly recommended to truncate the `newtimes` table " +
-		"(and/or debug the problem) because wrong entries can cause " +
-		"backups missing important changed files!";
-
 	/**
 	 * Stores paths for which newer times than in the latest block
 	 * containing that file are known. This means the map normally consumes
@@ -70,9 +65,8 @@ class DBNewTimes implements Iterable<Map.Entry<String,Long>> {
 
 	/**
 	 * This is a raw put access to the {@link #dbNewTimes} field.
-	 * This should only ever used by the deserializer because it bypasses
-	 * database consistency checks. Backup cration should use the
-	 * more specific methods!
+	 * Backup cration should use the more specific methods (this allows
+	 * adding useful consistency checks once they are invented)!
 	 */
 	void putDeserialized(String k, long v) {
 		dbNewTimes.put(k, v);
@@ -80,81 +74,26 @@ class DBNewTimes implements Iterable<Map.Entry<String,Long>> {
 
 	/**
 	 * @return newer time or <code>current</code> if no new time in DB.
-	 * @throws NonFatalDatabaseConsistencyViolationException
-	 *	If a time is in the database which is older than
-	 * 	<code>current</code>. Note that as per this implementation it
-	 *	is not useful to call <code>getNewestKnownTimeFor</code> with
-	 *	a timestamp detected for a file in the FS (because that may
-	 * 	well be newer) but instead this should be compared against a
-	 *	timestamp from the block database.
 	 */
-	long getNewestKnownTimeFor(String fn, long current)
-			throws NonFatalDatabaseConsistencyViolationException {
-		if(dbNewTimes.containsKey(fn)) {
-			long val = dbNewTimes.get(fn);
-			if(val > current)
-				return val;
-			else
-				throw new
-				NonFatalDatabaseConsistencyViolationException(
-					msg0(fn) + val +
-					", but the current date from the " +
-					"blocks is " + current + " which " +
-					"means the file should not be listed " +
-					"in the database. In case of doubt, " +
-					"truncate table `newtimes` in the " +
-					"database."
-				);
-		} else {
-			return current;
-		}
-	}
-
-	private static String msg0(String fn) {
-		return "WARNING: Found error in JMBB database consistency. " +
-			"Newest known time for \"" + fn + "\" as per the " +
-			"``new times'' table is ";
+	long getNewestKnownTimeFor(String fn, long current) {
+		return dbNewTimes.containsKey(fn)? dbNewTimes.get(fn): current;
 	}
 
 	/**
 	 * Records that the given file has changed (thus should be removed
 	 * from ``new times'' because now the block has the most recent
 	 * version).
-	 *
-	 * @throws NonFatalDatabaseConsistencyViolationException
-	 *	If <code>newTime</code> is older than the newest time in
-	 *	this database.
 	 */
-	void updateTimeFileChanged(String fn, long newTime)
-			throws NonFatalDatabaseConsistencyViolationException {
-		if(dbNewTimes.containsKey(fn)) {
-			long val = dbNewTimes.remove(fn);
-			if(val > newTime)
-				throw new
-				NonFatalDatabaseConsistencyViolationException(
-					msg0(fn) + val + ", but a new file " +
-					"with a proposedly newer but " +
-					"actually smaller timestamp " +
-					newTime + " has been registered. " +
-					PLS_FIX_INCONSISTENCY
-				);
-		}
+	void updateTimeFileChanged(String fn, long newTime) {
+		dbNewTimes.remove(fn);
 	}
 
-	void updateTimeFileNotChanged(String fn, long newTime)
-			throws NonFatalDatabaseConsistencyViolationException {
-		long val;
-		if(dbNewTimes.containsKey(fn) && (val = dbNewTimes.get(fn))
-								> newTime) {
-			throw new NonFatalDatabaseConsistencyViolationException(
-				msg0(fn) + val + ", but a proposedly newer " +
-				"but actually smaller timestamp " + newTime +
-				" was attemted to be registered. " +
-				PLS_FIX_INCONSISTENCY
-			);
-		} else {
-			dbNewTimes.put(fn, newTime);
-		}
+	void updateTimeFileNotChanged(String fn, long newTime) {
+		dbNewTimes.put(fn, newTime);
+	}
+
+	void updateFileObsolete(String fn) {
+		dbNewTimes.remove(fn);
 	}
 
 	void write(XMLWriter out) throws IOException {

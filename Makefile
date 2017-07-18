@@ -2,6 +2,7 @@ LANG    = java
 TARGET  = jmbb.jar
 RES     = ma
 XRES    = org README.txt Makefile
+XFLAGS  = -source 1.7 -target 1.7
 MAIN    = ma.jmbb.Main
 SECTION = 32
 
@@ -15,8 +16,8 @@ TESTBENCH=/usr/share/mdvl
 PKGDIR=/data/main/mdvl/packages/raw/mdvl-java-applications/usr/share/mdvl/java
 
 xz:
-	javac org/tukaani/xz/*.java
-	javac org/tukaani/xz/*/*.java
+	javac $(XFLAGS) org/tukaani/xz/*.java
+	javac $(XFLAGS) org/tukaani/xz/*/*.java
 
 test-create: jmbb
 	-rm -r "$(TESTDST)"

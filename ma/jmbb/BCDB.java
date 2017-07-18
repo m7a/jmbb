@@ -75,12 +75,9 @@ class BCDB extends DB {
 	private BCChangedFile acquireChangedFileWithPrevVersion(Stat s,
 			boolean meta, PrintfIO o, String path, DBFile prev)
 			throws MBBFailureException {
-		try {
-			if(prev.logicalEquals(s, times))
-				return null;
-		} catch(NonFatalDatabaseConsistencyViolationException ex) {
-			o.edprintf(ex, NON_FATAL_EMSG);
-		}
+
+		if(prev.logicalEquals(s, times))
+			return null;
 
 		// Checksum comparison happens here TODO single threaded
 
@@ -89,30 +86,22 @@ class BCDB extends DB {
 		newVersion.checksumIfNecessary(this);
 
 		if(newVersion.isContentwiseEqualToPreviousVersion()) {
-			try {
-				times.updateTimeFileNotChanged(path,
+			times.updateTimeFileNotChanged(path,
 							s.modificationTime);
-			} catch(NonFatalDatabaseConsistencyViolationException
-									ex) {
-				o.edprintf(ex, NON_FATAL_EMSG);
-			}
 			return null;
 		} else {
-			try {
-				times.updateTimeFileChanged(newVersion.change.
+			times.updateTimeFileChanged(newVersion.change.
 								getPath(),
 					newVersion.change.modificationTime);
-			} catch(NonFatalDatabaseConsistencyViolationException
-									ex) {
-				o.edprintf(ex, NON_FATAL_EMSG);
-			}
 			return newVersion;
 		}
 	}
 
 	void markRemainingNonexistentFilesObsolete() {
-		for(DBFile i: nonObsolete.values())
-			i.obsolete();
+		for(Map.Entry<String,DBFile> i: nonObsolete.entrySet()) {
+			times.updateFileObsolete(i.getKey());
+			i.getValue().obsolete();
+		}
 	}
 
 	String transformToDB(final String fileName) {

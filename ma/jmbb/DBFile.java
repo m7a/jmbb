@@ -97,9 +97,7 @@ class DBFile extends Stat {
 	// already been created (checksum comparison only applies if all other
 	// metadata points to the file being different because it is
 	// performace-intensive to compute)
-	boolean logicalEquals(Stat s, DBNewTimes newTimes)
-			// TODO CATCH NON FATAL ERROR NONFATALLY
-			throws NonFatalDatabaseConsistencyViolationException {
+	boolean logicalEquals(Stat s, DBNewTimes newTimes) {
 		return isMetadataEqual(s) && newTimes.getNewestKnownTimeFor(
 			getPath(), modificationTime) == s.modificationTime;
 	}

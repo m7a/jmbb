@@ -38,8 +38,10 @@ abstract class EditorAbstractCriticalDBCommand extends EditorCommand {
 	void obsoleteWholeBlock(DBBlock blk) throws Exception {
 		for(Iterator<DBFile> f = blk.getFileIterator(); f.hasNext();) {
 			DBFile i = f.next();
-			if(!i.isObsolete())
+			if(!i.isObsolete()) {
 				i.obsolete();
+				db.times.updateFileObsolete(i.getPath());
+			}
 		}
 		blk.deleteIfNewlyObsolete(o);
 	}
