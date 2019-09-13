@@ -115,7 +115,6 @@ class BCBlockCreator {
 		}
 
 		db.markRemainingNonexistentFilesObsolete();
-		db.blocks.deleteNewlyObsolete(o);
 		db.passwords.performAutomaticPasswordObsoletion(db.blocks, o);
 	}
 

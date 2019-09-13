@@ -70,6 +70,18 @@ class BackupCreator {
 		nextBlockFiles     = new ArrayList<BCChangedFile>();
 		nextBlockSize      = 0;
 
+		// The two stage finish system explained / New as of 2019/09/14
+		// processFiles() may fail e.g. if there are files that have
+		// potentially changes but which are no longer readable. This
+		// may cause the processStat()-function to fail which finally
+		// results in an MBBfailureException being thrown by
+		// processFiles().
+		//
+		// The intended behavior for this case is:
+		// Await child process termination, then terminate JMBB with
+		// an error code and without chainging the database and
+		// without deleting obsolete blocks.
+
 		creator = new BCBlockCreator(o, db);
 		try {
 			processFiles();
@@ -83,6 +95,11 @@ class BackupCreator {
 			throw scanner.getFailure();
 
 		saveDB();
+
+		// New 2019/09/14 delete blocks after writing DB for
+		// better transactionality (if something failed, no blocks
+		// are lost under no circumstances)
+		db.blocks.deleteNewlyObsolete(o);
 	}
 
 	private void processFiles() throws MBBFailureException {
