@@ -19,6 +19,9 @@ xz:
 	javac $(XFLAGS) org/tukaani/xz/*.java
 	javac $(XFLAGS) org/tukaani/xz/*/*.java
 
+update-readme:
+	cp /data/main/man/d5i/32/jmbb.d5i README.txt
+
 test-create: jmbb
 	-rm -r "$(TESTDST)"
 	echo testwort | java -Xmx5G ma.jmbb.Main -o "$(TESTDST)" -i "$(TESTSRC)"
