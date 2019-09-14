@@ -1,3 +1,9 @@
+# This is largely a private Makefile. Compiling is just this:
+#
+# 	javac -source 1.7 -target 1.7 $(find org ma -type f -name '*.java')
+# 	jar cfve jmbb.jar ma.jmbb.Main org ma
+#
+
 LANG    = java
 TARGET  = jmbb.jar
 RES     = ma
