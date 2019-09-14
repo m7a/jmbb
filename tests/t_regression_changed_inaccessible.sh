@@ -1,16 +1,7 @@
 #!/bin/sh -e
 #
 # TEST 2019/09/13
-# This test creates a backup and adds a non-traversable subdirectory.
-# As this directory is totally inacessible, it fails in the file traversal
-# step which will be printed by JMBB but which will not cause the backup process
-# to fail because apart from the non-readable files, the Backup could be
-# created successfully. As it might be desirable that future JMBB versions
-# issue an error code in this case (although continuing to backup is likely
-# a good thing), this test issues a warning if recturn codes for this step
-# change.
-#
-# This test passes as of JMBB 1.0.2.0
+# This test passes as of JMBB 1.0.3
 
 root="$(cd "$(dirname "$0")" && pwd)"
 wd="/tmp/jmbbtest$$"
