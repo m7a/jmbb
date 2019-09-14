@@ -7,6 +7,7 @@ tags		jmbb backup readme
 encoding	utf8
 compliance	public
 lang		en
+version		1.0.3
 creation	2014/08/06 01:16:35
 copyright	Copyright (c) 2013, 2014, 2015, 2017, 2019 Ma_Sys.ma.
 		For further info send an e-mail to Ma_Sys.ma@web.de.
