@@ -44,17 +44,17 @@ License: GPL-3+
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 License-Reference: /usr/share/common-licenses/GPL-3
 
-License: Public Domain
+License: Public-Domain
  This file has been put into the public domain.
  You can do whatever you want with this file.
 
-Files: ma jmbb jmbb.jar README.md build.xml
+Files: debian/* ma/* tests/* jmbb jmbb.jar README.md build.xml
 Copyright: Copyright (c) 2013, 2014, 2015, 2017, 2019, 2020 Ma_Sys.ma <Ma_Sys.ma@web.de>
 License: GPL-3+
 
-Files: org
+Files: org/*
 Copyright: (disclaimed)
-License: Public Domain
+License: Public-Domain
 ]]></property>
 
 <!-- CI INTEGRATION -->
