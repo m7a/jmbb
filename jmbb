@@ -1,0 +1,2 @@
+#!/bin/sh -e
+exec java -Xmx5400M -jar /usr/share/java/jmbb.jar "$@"

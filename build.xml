@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="build">
+
+<!-- APPLICATION METADATA -->
+<property name="masysma.target" value="jmbb"/>
+<property name="masysma.main"   value="ma.jmbb.Main"/>
+<property name="mdpc.name"      value="mdvl-jmbb"/>
+<property name="mdpc.section"   value="utils"/>
+<property name="mdpc.descrs"    value="Java Ma_Sys.ma Block Based Backup"/>
+<property name="mdpc.arch"      value="all"/>
+<property name="mdpc.depends"   value="default-jre"/>
+<property name="mdpc.descrl">
+ JMBB allows you to create encrypted incremental backups from source directories
+ to a destination directory. Unlike most encrypting backups JMBB does not use
+ encryption on per-file basis. Instead, it adds multiple files to a compressed
+ and encrypted archive file called “block”. This securely encryptes the source
+ directory structure and all file metadata. Whenever files have changed, they
+ are added to new blocks at the next incremental backup. When all files
+ contained in a block have been replaced by files from newer blocks (i.e. when
+ all files in an old block were changed over time) the old block is deleted.
+ This ensures that with common usecases the incremental backup will not be
+ bigger than the source data.
+</property>
+
+<property name="mdpc.file.install">
+jmbb.jar /usr/share/java
+jmbb /usr/bin
+README.md /usr/share/doc/mdvl-jmbb
+</property>
+
+<property name="mdpc.copyright.file"><![CDATA[
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+License-Reference: /usr/share/common-licenses/GPL-3
+
+License: Public Domain
+ This file has been put into the public domain.
+ You can do whatever you want with this file.
+
+Files: ma jmbb jmbb.jar README.md build.xml
+Copyright: Copyright (c) 2013, 2014, 2015, 2017, 2019, 2020 Ma_Sys.ma <Ma_Sys.ma@web.de>
+License: GPL-3+
+
+Files: org
+Copyright: (disclaimed)
+License: Public Domain
+]]></property>
+
+<!-- CI INTEGRATION -->
+<target name="package_triggered" depends="package">
+	<property name="masysma.ci.trigger" value="newver"/>
+</target>
+
+<!-- CONSTANT TPL IMPORT -->
+<property environment="env"/>
+<condition property="masysma.internal.includepath.rel" value="${env.MDVL_CI_PHOENIX_ROOT}" else=".."><isset property="env.MDVL_CI_PHOENIX_ROOT"/></condition>
+<property name="masysma.internal.includepath" location="${masysma.internal.includepath.rel}"/>
+<property name="masysma.internal.loadpath" value="${masysma.internal.includepath}/co-build/ant-build-template.xml"/>
+<condition property="masysma.internal.load" value="file://${masysma.internal.loadpath}" else="https://raw.githubusercontent.com/m7a/co-build/master/ant-build-template.xml"><resourceexists><file file="${masysma.internal.loadpath}"/></resourceexists></condition>
+<import><url url="${masysma.internal.load}"/></import>
+
+<fileset id="masysma.inccls" dir=".">
+	<include name="ma/**/*.class"/>
+	<include name="ma/**/*.java"/>
+	<include name="org/**/*.java"/>
+	<include name="org/**/*.class"/>
+	<include name="README.md"/>
+	<include name="build.xml"/>
+</fileset>
+
+</project>
