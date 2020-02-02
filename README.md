@@ -258,7 +258,7 @@ Feature         Implementation
 --------------  --------------------------------------------------------
 Archiving       GNU CPIO "Portable ASCII Format" (filesize limit: 8 GiB)
 Compression     XZ For Java url(http://tukaani.org/xz/java.html)
-Encyrption      AESCrypt AES256, see copyright url(http://aescrypt.com/)
+Encryption      AESCrypt AES256, see copyright url(http://aescrypt.com/)
 Database        GZipped XML with DTD included in JMBB JAR
 File traversal  Java NIO for backup source directory traversal
 
@@ -273,7 +273,7 @@ Variable        Description
 ## JMBB performace comparison table
 
 Command                            User/s  Sys/s  Real/s  MaxRes/k  Comp/O
----------------------------------  ---------------------------------------
+---------------------------------  ------  -----  ------  --------  ------
 `jmbb -o BAK -i SRC`               1231    71     298     3959444   0.3122
 `tar -c SRC | 7z* BAK`             822     7      239     3785532   0.3065
 `jmbb -r DST -s BAK`               162     15     175     478300    n/a
