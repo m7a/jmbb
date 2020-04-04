@@ -398,7 +398,7 @@ expects (and writes to the CPIO archives) real Windows filenames. Backups with
 Unix filenames however, are restored correctly even on Windows systems if you
 have a Windows version of CPIO.
 
-### TODO 
+### Bugs 
 
  * OutOfMemoryError does not cause nonzero exit status (but also does not update
    DB and therefore leaves it in a consistent state) → TEST
