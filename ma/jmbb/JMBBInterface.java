@@ -29,18 +29,13 @@ public class JMBBInterface {
 		new Restorer(o, src, dst, pattern, mode, version).run();
 	}
 
-	//public void drop(File mirror) throws MBBFailureException {
-	//	throw new MBBFailureException(
-	//		new ma.tools2.util.NotImplementedException("N_IMPL"));
-	//}
-
-	//public void grab(File dst) throws MBBFailureException {
-	//	throw new MBBFailureException(
-	//		new ma.tools2.util.NotImplementedException("N_IMPL"));
-	//}
-
 	public void edit(File db) throws MBBFailureException {
 		new Editor(o, db).run();
+	}
+
+	public void reportIntegrity(File db, File root)
+						throws MBBFailureException {
+		new IntegrityReport(o, db, root).run();
 	}
 
 }

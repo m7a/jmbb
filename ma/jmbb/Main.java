@@ -35,12 +35,12 @@ public class Main {
 				args.restoreVersion.getValue()
 			);
 			break;
-		//case DROP:
-		//	conn.drop(args.dropMirror.getValue());
-		//	break;
-		//case GRAB:
-		//	conn.grab(args.dstGrab.getValue());
-		//	break;
+		case INTEGRITY:
+			conn.reportIntegrity(
+				args.integrityDatabase.getValue(),
+				args.integrityBlockRoot.getValue()
+			);
+			break;
 		case EDIT:
 			conn.edit(args.editDatabase.getValue());
 			break;

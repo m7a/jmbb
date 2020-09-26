@@ -57,6 +57,9 @@ Copyright: (disclaimed)
 License: Public-Domain
 ]]></property>
 
+<property name="ant.build.javac.source" value="1.7"/>
+<property name="ant.build.javac.target" value="1.7"/>
+
 <!-- CI INTEGRATION -->
 <target name="package_triggered" depends="package">
 	<property name="masysma.ci.trigger" value="newver"/>
@@ -75,6 +78,7 @@ License: Public-Domain
 	<include name="ma/**/*.java"/>
 	<include name="org/**/*.java"/>
 	<include name="org/**/*.class"/>
+	<include name="ma/jmbb/mbb_db.dtd"/>
 	<include name="README.md"/>
 	<include name="build.xml"/>
 </fileset>

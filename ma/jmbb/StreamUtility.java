@@ -25,4 +25,13 @@ class StreamUtility {
 		}
 	}
 
+	static void computeDigestOnly(InputStream in, MessageDigest md)
+							throws IOException {
+		byte[] buf = new byte[JMBBInterface.DEFAULT_BUFFER];
+		int len;
+		while((len = in.read(buf, 0, buf.length)) != -1) {
+			md.update(buf, 0, len);
+		}
+	}
+
 }

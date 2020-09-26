@@ -10,8 +10,9 @@ class Args extends AbstractArgs { // TODO z Problem: MaArgs speaks German
 
 	static final String APPLICATION_NAME =
 					"Java Ma_Sys.ma Block Based Backup";
-	static final String APPLICATION_VERSION = "1.0.3";
-	static final String COPYRIGHT_YEARS = "2013, 2014, 2015, 2017, 2019";
+	static final String APPLICATION_VERSION = "1.0.4";
+	static final String COPYRIGHT_YEARS =
+					"2013, 2014, 2015, 2017, 2019, 2020";
 
 	final Parameter<File>            dstDatabase;
 	final Parameter<List<File>>      srcUpdate;
@@ -26,6 +27,9 @@ class Args extends AbstractArgs { // TODO z Problem: MaArgs speaks German
 	final Parameter<Integer>         restoreVersion;
 
 	final Parameter<File>            editDatabase;
+
+	final Parameter<File>            integrityDatabase;
+	final Parameter<File>            integrityBlockRoot;
 
 	Args() {
 		super();
@@ -119,6 +123,21 @@ class Args extends AbstractArgs { // TODO z Problem: MaArgs speaks German
 			"Database to edit."
 		));
 		add(editL);
+
+		// -- Integrity --
+		ArgumentList intL = new ArgumentList("Report integrity of " +
+					"block data.", ArgumentComposition.AND);
+		intL.add(integrityDatabase = new Parameter<File>(
+			"integrity", 'I', null,
+			new NamedFileConverter("DBFIL"),
+			"Database file to check against."
+		));
+		intL.add(integrityBlockRoot = new Parameter<File>(
+			"root", 'R', null,
+			new NamedSourceDirectoryConverter("ROOT"),
+			"Directory to scan for block files (.cxe)"
+		));
+		add(intL);
 	}
 
 	protected String getApplicationName() {
@@ -146,6 +165,8 @@ class Args extends AbstractArgs { // TODO z Problem: MaArgs speaks German
 			return ProgramMode.RESTORE;
 		} else if(editDatabase.isSet()) {
 			return ProgramMode.EDIT;
+		} else if(integrityDatabase.isSet()) {
+			return ProgramMode.INTEGRITY;
 		} else {
 			throw new NotImplementedException();
 		}
