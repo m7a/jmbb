@@ -1,3 +1,9 @@
+mdvl-jmbb (1.0.2) stable; urgency=medium
+
+  * Improve integrity check function.
+
+ -- Linux-Fan, Ma_Sys.ma <Ma_Sys.ma@web.de>  Mon, 28 Sep 2020 00:43:48 +0200
+
 mdvl-jmbb (1.0.1) stable; urgency=medium
 
   * Add integrity check function (-I/-R)
