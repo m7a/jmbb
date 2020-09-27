@@ -24,7 +24,7 @@ class BackupCreator {
 	private long normalMaxBlockSize;
 	private long nextBlockSize;
 
-	BackupCreator(PrintfIO o, File dst, List<File> src)
+	BackupCreator(final PrintfIO o, final File dst, final List<File> src)
 						throws MBBFailureException {
 		super();
 		this.o   = o;
@@ -91,8 +91,7 @@ class BackupCreator {
 			creator.finish();
 		}
 
-		if(scanner.hasFailed())
-			throw scanner.getFailure();
+		scanner.throwPossibleFailure();
 
 		saveDB();
 

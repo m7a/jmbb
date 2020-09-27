@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.tukaani.xz.XZInputStream;
 
@@ -18,28 +20,46 @@ import org.tukaani.xz.XZInputStream;
  */
 class IRBlock implements Runnable {
 
-	static final char YES = ':';
-	static final char NO  = 'E';
-	static final char ANY = '_';
-
 	/** Always set */
-	private final long          id;
-	/** If null, means this block is only in DB */
-	private final Path          osFile;
-	private final byte[]        expectedDBChecksum;
+	final long id;
+
+	/**
+	 * size() == 0 means only in DB
+	 * size() == 1 is normal
+	 * size() &gt; 2 is a hint towards spurious/duplicate blocks.
+	 */
+	private final List<Path> files;
+
 	/** if null, means this block is not in DB */
-	private final String        password;
-	private final MessageDigest md;
+	private String        password;
+	private boolean       isActive;
+	private MessageDigest md;
+	private byte[]        expectedDBChecksum;
 
-	private char statusKnownInDatabase         = ANY;
-	private char statusActive                  = ANY;
-	private char statusExistsOnHDD             = ANY; 
-	private char statusChecksumMatchesDatabase = ANY;
+	private boolean[]     matchingFiles;
+	private IRStatus      status;
 
-	IRBlock(Path osFile, long id, DB db) throws MBBFailureException {
-		this.osFile = osFile;
-		this.id     = id;
+	IRBlock(long id, Path file) {
+		this.id = id;
+		status = IRStatus.UNKNOWN;
+		files = new ArrayList<Path>();
+		if(file != null) {
+			files.add(file);
+		}
+	}
 
+	/** Create from database only */
+	IRBlock(DBBlock block) {
+		this.id = block.getId();
+		files = new ArrayList<Path>();
+		status = IRStatus.absent(!block.isObsoletedInTheFirstPlace());
+	}
+
+	void addFile(Path file) {
+		files.add(file);
+	}
+
+	void assignMetadataFromDB(DB db) throws MBBFailureException {
 		// Assign block from database if possible slow linear search...
 		DBBlock block = null;
 		for(DBBlock cdbb: db.blocks) {
@@ -49,113 +69,63 @@ class IRBlock implements Runnable {
 			}
 		}
 		if(block == null) {
-			statusKnownInDatabase = NO;
+			status = IRStatus.NOT_IN_DATABASE;
 		} else {
-			statusKnownInDatabase = YES;
-			if(block.isObsoletedInTheFirstPlace()) {
-				statusActive = NO;
-			} else {
-				statusActive = YES;
+			isActive = !block.isObsoletedInTheFirstPlace();
+			if(files.size() != 0) {
+				password = db.passwords.get(block.passwordId).
+								password;
+				expectedDBChecksum = block.checksum;
+				md = db.header.newMessageDigest();
 			}
 		}
+	}
 
-		if(osFile == null) {
-			statusExistsOnHDD  = NO;
-			password           = null;
-			expectedDBChecksum = null;
-			md                 = null;
-		} else {
-			statusExistsOnHDD = YES;
-			if(block == null) {
-				password           = null;
-				expectedDBChecksum = null;
-				md                 = null;
-			} else {
-				password           = db.passwords.get(block.
-							passwordId).password;
-				expectedDBChecksum = block.checksum;
-				md                 = db.header.
-							newMessageDigest();
-			}
+	void printMatchDetails(PrintfIO o) {
+		for(int i = 0; i < matchingFiles.length; i++) {
+			String match = matchingFiles[i]? "good": "BAD  ";
+			o.printf("      %s %s\n", match, files.get(i));
 		}
 	}
 
 	boolean isProcessingRequired() {
-		return statusExistsOnHDD == YES && statusKnownInDatabase == YES
-					&& statusChecksumMatchesDatabase == ANY;
+		return status == IRStatus.UNKNOWN;
+	}
+
+	IRStatus getStatus() {
+		return status;
 	}
 
 	@Override
 	public void run() {
-		try(InputStream is = new XZInputStream(Security.
+		boolean allMatch = true;
+		matchingFiles = new boolean[files.size()];
+
+		for(int i = 0; i < matchingFiles.length; i++) {
+			try(InputStream is = new XZInputStream(Security.
 					newAESInputFilter(password,
-					Files.newInputStream(osFile)))) {
-			StreamUtility.computeDigestOnly(is, md);
-			byte[] checksum = md.digest();
-			if(Arrays.equals(checksum, expectedDBChecksum)) {
-				statusChecksumMatchesDatabase = YES;
-			} else {
-				statusChecksumMatchesDatabase = NO;
+					Files.newInputStream(files.get(i))))) {
+				StreamUtility.computeDigestOnly(is, md);
+				byte[] checksum = md.digest();
+				matchingFiles[i] = Arrays.equals(checksum,
+							expectedDBChecksum);
+				allMatch = (allMatch && matchingFiles[i]);
+			} catch(MBBFailureException ex) {
+				matchingFiles[i] = false;
+				allMatch = false;
+			} catch(IOException ex) {
+				matchingFiles[i] = false;
+				allMatch = false;
 			}
-		} catch(MBBFailureException ex) {
-			statusChecksumMatchesDatabase = NO;
-		} catch(IOException ex) {
-			statusChecksumMatchesDatabase = NO;
 		}
-	}
 
-	@Override
-	public String toString() {
-		return String.format(
-			"%016x %c%c%c%c%c", id,
-			statusKnownInDatabase, statusActive, statusExistsOnHDD,
-			statusChecksumMatchesDatabase, getStatusGood()
-		);
-	}
-
-	private char getStatusGood() {
-		return isGood()? YES: NO;
-	}
-
-	private boolean isGood() {
-		return (statusKnownInDatabase == YES) && (
-			((statusActive == YES) && (statusExistsOnHDD == YES) &&
-				(statusChecksumMatchesDatabase == YES)) ||
-			((statusActive == NO) && (statusExistsOnHDD == NO))
-		);
-	}
-
-	void addToStats(IRStats s) {
-		if(statusKnownInDatabase == YES)
-			s.databaseY++;
-		else
-			s.databaseN++;
-
-		if(statusActive == YES)
-			s.activeY++;
-		else if(statusActive == NO)
-			s.activeN++;
-		else
-			s.activeAny++;
-
-		if(statusExistsOnHDD == YES)
-			s.hddY++;
-		else if(statusExistsOnHDD == NO)
-			s.hddN++;
-		else
-			s.hddAny++;
-
-		if(statusChecksumMatchesDatabase == YES)
-			s.equalY++;
-		else if(statusChecksumMatchesDatabase == NO)
-			s.equalN++;
-		else
-			s.equalAny++;
-
-		if(isGood())
-			s.goodY++;
-		else
-			s.goodN++;
+		if(matchingFiles.length == 0) {
+			status = IRStatus.absent(isActive);
+		} else if(matchingFiles.length == 1) {
+			status = IRStatus.simpleComparison(isActive, allMatch);
+		} else {
+			status = IRStatus.duplicate(isActive, allMatch);
+		}
 	}
 
 }

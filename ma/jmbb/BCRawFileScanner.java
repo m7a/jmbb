@@ -19,31 +19,16 @@ class BCRawFileScanner extends AbstractFileScanner {
 	private final LinkedBlockingQueue<Stat> internalQueue;
 	private final boolean showWarning;
 
-	private MBBFailureException fatalError;
-	private boolean complete;
-
 	BCRawFileScanner(final PrintfIO o, final List<File> src)
 						throws MBBFailureException {
 		super(o, src);
 		internalQueue = new LinkedBlockingQueue<Stat>();
-		fatalError    = null;
-		complete      = false;
 		showWarning   = shallShowWarning();
 	}
 
 	private boolean shallShowWarning() {
 		String raw = System.getenv("JMBB_WINDOWS");
 		return raw == null || !raw.equals("true");
-	}
-
-	public void run() {
-		try {
-			performSourceDirectoryScan();
-		} catch(MBBFailureException ex) {
-			fatalError = ex;
-		} finally {
-			complete = true;
-		}
 	}
 
 	@Override
@@ -117,16 +102,8 @@ class BCRawFileScanner extends AbstractFileScanner {
 		do {
 			s = internalQueue.poll(CHECK_FOR_COMPLETED_EVERY_MS,
 							TimeUnit.MILLISECONDS);
-		} while(!complete && s == null);
+		} while(!isComplete() && s == null);
 		return s;
-	}
-
-	boolean hasFailed() {
-		return fatalError != null;
-	}
-
-	MBBFailureException getFailure() {
-		return fatalError;
 	}
 
 }

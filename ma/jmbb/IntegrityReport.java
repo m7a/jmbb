@@ -24,39 +24,65 @@ class IntegrityReport {
 	}
 
 	void run() throws MBBFailureException {
-		// 1. Load database
+		// == Stage 1: Metadata acquisition ==
+
+		// 1a: Load database
 		// Note: dbFile.getParent() is just "pro forma".
 		//       It needs to be a valid path despite not being used
 		//       for any of the integrity checks...
-		Path dbFilePath = dbFile.toPath();
-		DB db = new DB(dbFilePath.getParent(), o);
+		final Path dbFilePath = dbFile.toPath();
+		final DB db = new DB(dbFilePath.getParent(), o);
+		FailableThread dbLoader = new FailableThread() {
+			@Override
+			public void runFailable() throws Exception {
+				db.initFromLoc(dbFilePath);
+			}
+		};
+		dbLoader.start();
+
+		// 1b: Scan file system
+		Map<Long,IRBlock> results = new TreeMap<Long,IRBlock>();
+		IRFileScanner scanner = new IRFileScanner(o,
+						Arrays.asList(root), results);
+		scanner.start();
+
+		// synchronize
 		try {
-			db.initFromLoc(dbFilePath);
-		} catch(IOException ex) {
+			dbLoader.join();
+			scanner.join();
+		} catch(InterruptedException ex) {
 			throw new MBBFailureException(ex);
 		}
+		// record all possible failures
+		try {
+			dbLoader.throwPossibleFailure();
+		} finally {
+			scanner.throwPossibleFailure();
+		}
 
-		Map<Long,IRBlock> results = new TreeMap<Long,IRBlock>();
-
-		// 2. Scan for blocks (and process them in the executor service)
+		// == Stage 2: Process ==
 		ExecutorService pool = Executors.newFixedThreadPool(Runtime.
 					getRuntime().availableProcessors());
-		IRFileScanner scanner = new IRFileScanner(o, Arrays.asList(root
-							), db, results, pool);
-		scanner.performSourceDirectoryScan();
+		for(IRBlock block: results.values()) {
+			block.assignMetadataFromDB(db);
+			if(block.isProcessingRequired()) {
+				pool.execute(block);
+			}
+		}
+		
+		// everything submitted
 		pool.shutdown();
 
-		// 3. Check for entries in DB which are not in results list yet.
-		//    By construction this means they are _only_ in the DB and
-		//    not on the FS.
+		// Check for entries in DB which are not in results list yet.
+		// By construction this means they are _only_ in the DB and
+		// not on the FS.
 		for(DBBlock dbb: db.blocks) {
 			if(!results.containsKey(dbb.getId())) {
-				results.put(dbb.getId(), new IRBlock(null,
-							dbb.getId(), db));
+				results.put(dbb.getId(), new IRBlock(dbb));
 			}
 		}
 
-		// 4. Await results
+		// synchronize
 		try {
 			while(!pool.isTerminated()) {
 				pool.awaitTermination(300, TimeUnit.SECONDS);
@@ -65,34 +91,51 @@ class IntegrityReport {
 			throw new MBBFailureException(ex);
 		}
 
-
-		// 5. Print results
-		IRStats stats = new IRStats();
-		o.printf("D -- Database? Block is known in Database (Y/N)\n");
-		o.printf("A -- Active?   (Y/N)\n");
-		o.printf("H -- HDD?      Block exists on HDD (Y/N)\n");
-		o.printf("E -- Equal?    Block checksum matches the one " +
-					"reported in the database (Y/N)\n");
-		o.printf("G -- Good?     (Y/N)\n\n");
-		o.printf(": -- yes\n");
-		o.printf("E -- no\n");
-		o.printf("_ -- any\n\n");
-		o.printf("%-16s DAHEG | %-16s DAHEG | %-16s DAHEG\n",
-					"BlockID", "BlockID", "BlockID");
-		int e = 0;
+		// == Stage 3: Print results ==
+		int[] counters = new int[IRStatus.values().length];
+		boolean isFail = false;
+		Arrays.fill(counters, 0);
+		o.printf("Details\n");
+		o.printf("=======\n\n");
 		for(IRBlock irb: results.values()) {
-			o.printf("%s", irb.toString());
-			irb.addToStats(stats);
-			if(++e == 3) {
-				o.printf("\n");
-				e = 0;
+			IRStatus status = irb.getStatus();
+			if(status.summary == IRStatusSummary.FAILURE) {
+				isFail = true;
+			}
+			o.printf("%016x  %s\n", irb.id, status.toString());
+			if(status.isDuplicateMismatch()) {
+				irb.printMatchDetails(o);
+			}
+			counters[status.ordinal()]++;
+		}
+
+		o.printf("\nStatistics\n");
+		o.printf("==========\n\n");
+
+		int sum = 0;
+		IRStatusSummary cat = null;
+		for(IRStatus stat: IRStatus.values()) {
+			int i = stat.ordinal();
+			if(cat == stat.summary) {
+				sum += counters[i];
 			} else {
-				o.printf(" | ");
+				if(cat != null && sum != 0) {
+					o.printf("      %-30s %d\n",
+							"-- SUM", sum);
+				}
+				sum = counters[i];
+				cat = stat.summary;
+			}
+			if(counters[i] != 0) {
+				o.printf("%-30s %d\n", stat.toString(),
+								counters[i]);
 			}
 		}
 
-		// 6. Print statistics
-		stats.print(o);
+		o.printf("\nSummary\n");
+		o.printf("=======\n\n");
+		o.printf("%s\n", (isFail? "BACKUP IS INCONSISTENT!":
+						"Backup is consistent."));
 	}
 
 }

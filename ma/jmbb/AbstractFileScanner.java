@@ -10,7 +10,8 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-abstract class AbstractFileScanner extends Thread implements FileVisitor<Path> {
+abstract class AbstractFileScanner extends FailableThread
+						implements FileVisitor<Path> {
 
 	static final String NEVER =
 		"This text should never be visible to the user because the " +
@@ -18,12 +19,23 @@ abstract class AbstractFileScanner extends Thread implements FileVisitor<Path> {
 
 	final PrintfIO o; // use only in subclass
 	private final List<File> src;
+	private boolean complete;
 
-	AbstractFileScanner(final PrintfIO o, final List<File> src)
+	AbstractFileScanner(PrintfIO o, List<File> src)
 						throws MBBFailureException {
 		super();
 		this.o   = o;
 		this.src = src;
+		complete = false;
+	}
+
+	@Override
+	public void runFailable() throws Exception {
+		try {
+			performSourceDirectoryScan();
+		} finally {
+			complete = true;
+		}
 	}
 
 	void performSourceDirectoryScan() throws MBBFailureException {
@@ -59,6 +71,10 @@ abstract class AbstractFileScanner extends Thread implements FileVisitor<Path> {
 							throws IOException {
 		o.edprintf(es, "Failed to visit: %s\n", file.toString());
 		return FileVisitResult.CONTINUE;
+	}
+
+	boolean isComplete() {
+		return complete;
 	}
 
 }
