@@ -84,7 +84,8 @@ class IRBlock implements Runnable {
 	void printMatchDetails(PrintfIO o) {
 		for(int i = 0; i < matchingFiles.length; i++) {
 			String match = matchingFiles[i]? "good": "BAD  ";
-			o.printf("      %s %s\n", match, files.get(i));
+			o.printf("                          %s %s\n", match,
+								files.get(i));
 		}
 	}
 

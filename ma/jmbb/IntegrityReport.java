@@ -120,14 +120,14 @@ class IntegrityReport {
 				sum += counters[i];
 			} else {
 				if(cat != null && sum != 0) {
-					o.printf("%-30s %d\n",
+					o.printf("%-40s %d\n",
 							"        -- SUM", sum);
 				}
 				sum = counters[i];
 				cat = stat.summary;
 			}
 			if(counters[i] != 0) {
-				o.printf("%-30s %d\n", stat.toString(),
+				o.printf("%-40s %d\n", stat.toString(),
 								counters[i]);
 			}
 		}
