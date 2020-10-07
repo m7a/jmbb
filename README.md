@@ -89,14 +89,15 @@ bad data can be recovered in case of failure. To mitigate the potential
 negative aspects, JMBB relies on _standard formats_ for all of its features.
 Still, some risks remain. To give an overview about the alternatives which are
 used by more users, this list has been created. If you believe some similar
-application is not on this list, I am eager to hear/read of it. 
+application is not on this list, I am eager to hear/read of it.
 
+ * [borgbackup](https://borgbackup.readthedocs.io/en/stable/index.html)
+ * [restic](https://restic.net/)
  * [duplicity](http://duplicity.nongnu.org/)
- * [Borg](https://borgbackup.readthedocs.io/en/stable/index.html)
 
 These alternatives do not advertise compression as strongly as JMBB does which
 can cost you more money in case cloud storage is involved. In other use cases,
-however, they might even be better than JMBB for the task! 
+however, they might even be better than JMBB for the task!
 
 Advanced Usage
 ==============
