@@ -7,7 +7,7 @@ lang: en-US
 x-masysma-version: 1.0.3
 date: 2014/08/06 01:16:35
 x-masysma-copyright: |
-  Copyright (c) 2013, 2014, 2015, 2017, 2019 Ma_Sys.ma.
+  Copyright (c) 2013, 2014, 2015, 2017, 2019, 2020 Ma_Sys.ma.
   For further info send an e-mail to Ma_Sys.ma@web.de.
   This program's encryption functions are modifications of
   Java AESCrypt, Copyright 2008 Vócali Sistemas Inteligentes.
@@ -97,14 +97,20 @@ application is not on this list, I am eager to hear/read of it.
 
 These alternatives do not advertise compression as strongly as JMBB does which
 can cost you more money in case cloud storage is involved. In other use cases,
-however, they might even be better than JMBB for the task!
+however, they might even be better than JMBB for the task. For instance, in
+case you are backing up large files, due to the file size limitations of JMBB
+and due to its inability to efficiently process small changes within large
+files, it may be advisable to run either `borgbackup` or `restic` for backing up
+virtual machine disk images.
 
 Advanced Usage
 ==============
 
 Creating and updating a backup with JMBB is simple enough. However, JMBB was
 also designed to be used for complex backup strategies. As an example, this
-section describes how to setup a backup strategy similar to JMBB's author's. 
+section describes how to setup a backup strategy similar to JMBB's author's.
+
+## Integration into a Backup strategy
 
 My backup consists of multiple layers: A quick incremental backup to another
 internal HDD is created on every shutdown. Its main purpose is to record
@@ -118,14 +124,12 @@ standard Linux utilities.
 ### The backup upon shutdown
 
  * `$ jmbb -o $HOME/backup -i /data/main | copydelta.sh`
- * `copydelta.sh` collects new blocks until the space needed to fill a CD is
-    reached. Then an ISO image is generated. This makes it possible to recover
-    deleted files by restoring deleted blocks from a CD.
+ * `copydelta.sh` collects new blocks into a separate directory.
 
 ### The weekly backup to an external SSD
 
  * `$ jmbb -d $HOME/backup -c /mnt/backup`
- * Simple mirroring is sufficient.
+ * Mirroring is sufficient.
 
 ### The system and data backup
 
@@ -145,18 +149,20 @@ standard Linux utilities.
    `onlinesync.sh` is a hypothethical name of a script to synchronize a normal
    directory with the online storage.
 
+### The archive backup
+
+On an irregular schedule, new blocks that were collected upon shutdown are
+archived to separate machine. After arriving there, the new integrity check
+feature is used to check the existent and newly created blocks' consistency.
+This archive acts in a pull-based fashion and does not ever overwrite existent
+data to achive some resistance against file corruption caused by malware.
+
 ## Wrapper scripts
 
 As you can see, JMBB is best used in conjunction with other scripts and
 utilities. Also, it is recommended not to invoke JMBB directly but create a
 script to create an interface for your personal backup strategy in order to
-make backups more convenient. My wrapper script is called databackup and can be
-invoked as simple as that: 
-
- * `$ databackup -i` Automatically invoked upon shutdown (incremental backup). 
- * `$ databackup -n` For “normal” backups (CF card backup).
- * `$ databackup -b` For “big” backups (external SSD backup). 
- * `$ databackup -w` For “web” backups to online storage. 
+make backups more convenient.
 
 Wrapper scripts are also helpful to add additional utility invocations, provide
 required environment variables (cf. table below) and to enter source
@@ -166,7 +172,7 @@ Maintenance
 ===========
 
 JMBB has an internal editor for database maintenace tasks. It can be started
-as follows: 
+as follows:
 
 	$ jmbb -e BACKUP
 
@@ -175,7 +181,7 @@ passwords, display database statistics and clear blocks which mainly consist of
 obsolete files. Also, it allows the user to view contents of a specific block
 as they are registered in the database. If a password has been cracked or
 leaked, the editor can also “deprecate” passwords, i. e. force all blocks
-using the obsolete password to be recompiled on the next JMBB invocation.
+using the obsolete password to be re-created on the next JMBB invocation.
 
 Transition to 1.0.1.0
 =====================
@@ -249,6 +255,12 @@ intermittent deletion or `chmod 000`), then this could cause a backup
 inconsistency (blocks being deleted but not marked in the database as such).
 This version attempts to fix the issue by only deleting blocks after the DB
 with the changes could be saved successfully.
+
+Updates in 1.0.4 to 1.0.6
+=========================
+
+No changes should be necessary. This release adds the integrity check feature
+described in section _Performing Integrity Checks_.
 
 Tables
 ======
@@ -324,6 +336,93 @@ Also, the increasing RAM usage of the database is considered a “known issue”
 which should be resolved in the future. Be aware, however, that a solution to
 that issue will at least require you to convert your database if not to switch
 to anoter program.
+
+Performing Integrity Checks
+===========================
+
+Since version 1.0.6, a new mode of invoking JMBB has been added: The integrity
+check. The idea behind the integrity check is to supply a database file and
+a directory that contains `.cxe` files. JMBB will then attempt to decrypt all
+of the blocks and compare their checksum against the value stored in the
+database. Additionally, JMBB checks if all blocks necessary to restore the
+backup state from the database are present on disk.
+
+Despite being a computationally and I/O intensive operation, the integrity
+check can achieve good performance: Below invocation ran on about 250 GiB of
+block data and finished in about half an hour, i.e. averaged 140 MiB/s on an
+Intel Core i7-4770 with 24 GiB of RAM and a software RAID 1 of SATA HDDs.
+
+	$ jmbb -I /fs/backuphist/metadata/db.xml.gz -R /fs/backuphist/blocks
+	Details
+	=======
+
+	0000000000000001  [ ok ]  obsolete, absent
+	0000000000000002  [ ok ]  obsolete, absent
+	0000000000000003  [ ok ]  obsolete, absent
+	[...]
+	00000000000013b2  [FAIL]  active,   absent
+	00000000000013b3  [FAIL]  active,   absent
+	00000000000013b4  [FAIL]  active,   absent
+	[...]
+	00000000000033a8  [ ok ]  active,   verified
+	00000000000033a9  [ ok ]  active,   verified
+	
+	Statistics
+	==========
+
+	[ ok ]  active,   verified               3098
+	[ ok ]  obsolete, verified               8942
+	[ ok ]  obsolete, absent                 915
+		-- SUM                           12955
+	[FAIL]  active,   absent                 269
+
+	Summary
+	=======
+
+	BACKUP IS INCONSISTENT!
+
+The report is structured as follows:
+
+## Details
+
+All blocks are listed in a sorted and tabular fashion. The table columns are as
+follows:
+
+ 1. Block ID: The number of the block
+ 2. `[ ok ]` or `[FAIL]` depending on whether this block is good or not.
+    A block is good if either (a) it exists on disk and its checksum matches
+    OR (b) it does not exist on disk and is no longer needed (obsolete).
+ 3. Whether the block under consideration is needed (`active`) or obsolete.
+ 4. Whether the block is present on disk and verified (`verified`),
+    not present on disk (`absent`) or present but not the same as recorded
+    in the database (`CHECKSUM MISMATCH`). In case multiple block files exist
+    with the same name, their individual file paths and whether they match the
+    database will also be reported in separate lines following the current
+    entry. In case you are interested in the complete set of messages that
+    can appear here, check file `ma/jmbb/IRStatus.java`.
+
+## Statistics
+
+This section counts each of the result messages' occurrences. In case of
+a backup archive there might be a constant number of blocks in the
+`obsolete absent` category that should not increase (unless the archive
+is losing blocks!). Hence, these statistics allow insights into the completeness
+of such an archive beyond a simple “is able to restore”.
+
+## Summary
+
+This section will only ever display one of two messages:
+
+`BACKUP IS INCONSISTENT!`
+:   At least one of the active blocks is absent or
+    at least one block file was found to have a mismatching checksum.
+`Backup is consistent.`
+:   All blocks on disk match the database's contents and it should be possible
+    to restore the state of the database from the blocks. Note: JMBB does not
+    extract all of the blocks' contents, thus a minor uncertainity remains that
+    the blocks' contents may have been invalid in the first place. Such
+    anomalies can currently only be detected by performing a proper restore and
+    then comparing against the original data.
 
 Compiling
 =========
