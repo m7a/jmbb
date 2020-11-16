@@ -94,6 +94,7 @@ application is not on this list, I am eager to hear/read of it.
  * [borgbackup](https://borgbackup.readthedocs.io/en/stable/index.html)
  * [restic](https://restic.net/)
  * [duplicity](http://duplicity.nongnu.org/)
+ * non-free license: [Duplicacy](https://duplicacy.com/)
 
 These alternatives do not advertise compression as strongly as JMBB does which
 can cost you more money in case cloud storage is involved. In other use cases,

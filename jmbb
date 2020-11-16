@@ -1,2 +1,3 @@
 #!/bin/sh -e
-exec java -Xmx5400M -jar /usr/share/java/jmbb.jar "$@"
+exec java "-Xmx$((1600 * $(grep processor /proc/cpuinfo | wc -l)))M" \
+					-jar /usr/share/java/jmbb.jar "$@"
