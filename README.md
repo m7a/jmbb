@@ -438,6 +438,7 @@ mount backup as r/o filesystem         No    Yes
 multiple hosts backup to same target   No    Yes
 cnfigure output file size limit        No    Yes?
 consistent state on interruption       No    Yes?
+incremental metadata store/update      No    No?
 concurrent write to same target        No    No?
 retry on fail mechanisms               No    No?
 GDPR-style data deletion requests      (5)   No?
@@ -534,9 +535,8 @@ script to create an interface for your personal backup strategy in order to
 make backups more convenient.
 
 Wrapper scripts are also helpful to add additional utility invocations, provide
-required environment variables (cf. table below) and to enter source
-directories automatically. 
-
+required environment variables (cf. table above) and to enter source
+directories automatically.
 
 Bug reporting
 =============
