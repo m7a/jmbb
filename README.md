@@ -80,95 +80,6 @@ installations. The technical limitations (cf. tables below) make JMBB unuseable
 for handling large files of 8 GiB or larger. Creating a backup of 8 GiB or
 more data however, is not an issue. 
 
-Alternatives
-============
-
-Relying on backup software used by few pople, which JMBB is for example, is
-always a security risk: No experts have reviewed the sourcecode and chances are
-bad data can be recovered in case of failure. To mitigate the potential
-negative aspects, JMBB relies on _standard formats_ for all of its features.
-Still, some risks remain. To give an overview about the alternatives which are
-used by more users, this list has been created. If you believe some similar
-application is not on this list, I am eager to hear/read of it.
-
- * [borgbackup](https://borgbackup.readthedocs.io/en/stable/index.html)
- * [restic](https://restic.net/)
- * [duplicity](http://duplicity.nongnu.org/)
- * non-free license: [Duplicacy](https://duplicacy.com/)
-
-These alternatives do not advertise compression as strongly as JMBB does which
-can cost you more money in case cloud storage is involved. In other use cases,
-however, they might even be better than JMBB for the task. For instance, in
-case you are backing up large files, due to the file size limitations of JMBB
-and due to its inability to efficiently process small changes within large
-files, it may be advisable to run either `borgbackup` or `restic` for backing up
-virtual machine disk images.
-
-Advanced Usage
-==============
-
-Creating and updating a backup with JMBB is simple enough. However, JMBB was
-also designed to be used for complex backup strategies. As an example, this
-section describes how to setup a backup strategy similar to JMBB's author's.
-
-## Integration into a Backup strategy
-
-My backup consists of multiple layers: A quick incremental backup to another
-internal HDD is created on every shutdown. Its main purpose is to record
-changes and allowing to fetch older versions of files if a file was
-accidentally deleted or changed. About once per week, a backup is copied to an
-external CF card. Even less often, a backup of system data and programs is
-copied to an external SSD. Sometimes, a backup is copied to an online-storage
-for additional safety. This backup strategy is implemented using JMBB and
-standard Linux utilities. 
-
-### The backup upon shutdown
-
- * `$ jmbb -o $HOME/backup -i /data/main | copydelta.sh`
- * `copydelta.sh` collects new blocks into a separate directory.
-
-### The weekly backup to an external SSD
-
- * `$ jmbb -d $HOME/backup -c /mnt/backup`
- * Mirroring is sufficient.
-
-### The system and data backup
-
- * `$ jmbb -d $HOME/backup -c /mnt/backup_system`
- * `$ rsync -av /data/programs /mnt/backup_system` 
-
-### The online backup.
-
- * `$ jmbb -d $HOME/backup -c $HOME/backup`
-   This shows a special JMBB feature: A mirror can be stored in a database.
-   By storing all blocks in a directory called "cnt" and an encrypted copy of
-   the database with it, it is easily possible to sync "cnt" to a (possibly
-   public) online storage without disclosing any information about your files.
-   To extract the files, a copy of the DB (`cnt/../db.xml.gz`) or the password
-   are required.
- * `$ onlinesync.sh $HOME/backup/cnt`
-   `onlinesync.sh` is a hypothethical name of a script to synchronize a normal
-   directory with the online storage.
-
-### The archive backup
-
-On an irregular schedule, new blocks that were collected upon shutdown are
-archived to separate machine. After arriving there, the new integrity check
-feature is used to check the existent and newly created blocks' consistency.
-This archive acts in a pull-based fashion and does not ever overwrite existent
-data to achive some resistance against file corruption caused by malware.
-
-## Wrapper scripts
-
-As you can see, JMBB is best used in conjunction with other scripts and
-utilities. Also, it is recommended not to invoke JMBB directly but create a
-script to create an interface for your personal backup strategy in order to
-make backups more convenient.
-
-Wrapper scripts are also helpful to add additional utility invocations, provide
-required environment variables (cf. table below) and to enter source
-directories automatically. 
-
 Maintenance
 ===========
 
@@ -478,6 +389,153 @@ the JMBB restoration function … it is listed here for emergency cases only.
 To reduce the possiblity of such an emergency where JMBB might not be
 available, it is advisable to store JMBB and a “reference” CPIO implementation
 next to the backup, ideally in the same folder the backup resides in.
+
+Alternatives
+============
+
+Relying on backup software used by few people, which JMBB is for example, is
+always a security risk: No experts have reviewed the sourcecode and chances are
+bad data can be recovered in case of failure. To mitigate the potential
+negative aspects, JMBB relies on _standard formats_ for all of its features.
+Still, some risks remain. To give an overview about the alternatives which are
+used by more users, this list has been created. If you believe some similar
+application is not on this list, I am eager to hear/read of it.
+
+ * [borgbackup](https://borgbackup.readthedocs.io/en/stable/index.html)
+ * [duplicity](http://duplicity.nongnu.org/)
+ * non-free license: [Duplicacy](https://duplicacy.com/)
+
+Here is an informal feature-comparison table for tools that were tested at the
+Ma_Sys.ma. Any tool needs to support create and restore operations. Others are
+listed below:
+
+Feature                                JMBB  Borg
+-------------------------------------  ----  ----
+Basic Features                                
+shrink on input-file deletion          Yes   Yes
+UNIX special files and metadata        Yes   Yes
+restore individual files               Yes   Yes
+data encryption                        Yes   Yes
+metadata encryption                    Yes   Yes
+multithreading                         Yes   No
+input file size irrelevant             No    Yes
+input file number irrelevant           (4)   (4)
+                                              
+Advanced Features                             
+compression                            Yes   Yes
+integrity checks                       Yes   Yes
+data archival                          Yes   No?
+works on slow target storage           Yes   No?
+readable by third-party tools          (2)   No
+Windows support w/o WSL/Cygwin         (3)   No
+retention policy for versions          No    Yes
+deduplication                          No    Yes
+directly upload to remote              No    (1)
+                                              
+Very Advanced Features                        
+mount backup as r/o filesystem         No    Yes
+multiple hosts backup to same target   No    Yes
+cnfigure output file size limit        No    Yes?
+consistent state on interruption       No    Yes?
+concurrent write to same target        No    No?
+retry on fail mechanisms               No    No?
+GDPR-style data deletion requests      (5)   No?
+integrated cloud storage client        No    No
+data redundancy/bit rot recover        No    No
+crypto-trojan-proof pull-scheme        No    No
+consistenly backup running VMs or DBs  No    No
+process non-persistent live streams    No    No
+REST API for submitting backup inputs  No    No
+REST API for restoring                 No    No
+REST API for monitoring                No    No
+
+Yes?/No? := guessed.
+
+### Footnotes
+
+ 1. Yes, but only to Borg-specific server.
+ 2. Yes, but practically limited to restoration of individual files.
+ 3. Yes, but only for restoring with a `cpio.exe`.
+ 4. Both tools' capability for many files is limited. Borg is limited by its
+    sequential approach, JMBB is limited by loading its metadata completely into
+    RAM.
+ 5. Yes, but: Requires obsoleting all related blocks manually by means of
+    `jmbb -e` and `obsolete id`. Impractical for anything more than a few
+    requests per year. Metadata is retained. Archival storage not affected
+    (if used).
+
+The ideal backup tool should support all of _Basic Features_ and
+_Advanced Features_.
+
+The table is presented such that “Yes” means “good” and “No” means “bad”. Thus
+there are negated lines like _input file size irrelevant_ because if the input
+file size is limited/relevant that's bad and hence “No” is given in the table.
+
+Advanced Usage
+==============
+
+Creating and updating a backup with JMBB is simple enough. However, JMBB was
+also designed to be used for complex backup strategies. As an example, this
+section describes how to setup a backup strategy similar to JMBB's author's.
+
+## Integration into a Backup Strategy
+
+My backup consists of multiple layers: A quick incremental backup to another
+internal HDD is created on every shutdown. Its main purpose is to record
+changes and allowing to fetch older versions of files if a file was
+accidentally deleted or changed. About once per week, a backup is copied to an
+external CF card. Even less often, a backup of system data and programs is
+copied to an external SSD. Sometimes, a backup is copied to an online-storage
+for additional safety. This backup strategy is implemented using JMBB and
+standard Linux utilities. 
+
+### The backup upon shutdown
+
+ * `$ jmbb -o $HOME/backup -i /data/main | copydelta.sh`
+ * `copydelta.sh` collects new blocks into a separate directory.
+
+### The weekly backup to an external SSD
+
+ * `$ jmbb -d $HOME/backup -c /mnt/backup`
+ * Mirroring is sufficient.
+
+### The system and data backup
+
+ * `$ jmbb -d $HOME/backup -c /mnt/backup_system`
+ * `$ rsync -av /data/programs /mnt/backup_system` 
+
+### The online backup.
+
+ * `$ jmbb -d $HOME/backup -c $HOME/backup`
+   This shows a special JMBB feature: A mirror can be stored in a database.
+   By storing all blocks in a directory called "cnt" and an encrypted copy of
+   the database with it, it is easily possible to sync "cnt" to a (possibly
+   public) online storage without disclosing any information about your files.
+   To extract the files, a copy of the DB (`cnt/../db.xml.gz`) or the password
+   are required.
+ * `$ onlinesync.sh $HOME/backup/cnt`
+   `onlinesync.sh` is a hypothethical name of a script to synchronize a normal
+   directory with the online storage.
+
+### The archive backup
+
+On an irregular schedule, new blocks that were collected upon shutdown are
+archived to separate machine. After arriving there, the new integrity check
+feature is used to check the existent and newly created blocks' consistency.
+This archive acts in a pull-based fashion and does not ever overwrite existent
+data to achive some resistance against file corruption caused by malware.
+
+## Wrapper scripts
+
+As you can see, JMBB is best used in conjunction with other scripts and
+utilities. Also, it is recommended not to invoke JMBB directly but create a
+script to create an interface for your personal backup strategy in order to
+make backups more convenient.
+
+Wrapper scripts are also helpful to add additional utility invocations, provide
+required environment variables (cf. table below) and to enter source
+directories automatically. 
+
 
 Bug reporting
 =============
