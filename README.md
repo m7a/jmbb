@@ -418,6 +418,7 @@ restore individual files               Yes   Yes
 data encryption                        Yes   Yes
 metadata encryption                    Yes   Yes
 multithreading                         Yes   No
+arbitrarily complex file names         No    Yes?
 input file size irrelevant             No    Yes
 input file number irrelevant           (4)   (4)
                                               
