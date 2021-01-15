@@ -99,11 +99,6 @@ class EditDuplicateCurrent extends EditorAbstractCriticalDBCommand
 		}
 	}
 
-	@Override
-	public void printDocumentation() {
-		o.printf("N/A\n"); // TODO ...
-	}
-
 	private static class AddOnceMap<K,V> implements Map<K,V> {
 
 		private final KeyValueReplacementHandler<K,V>

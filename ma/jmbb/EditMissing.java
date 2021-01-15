@@ -30,7 +30,7 @@ class EditMissing extends EditorCommand {
 
 	public void printDocumentation() {
 		o.printf("This is useful if the DB got corrputed and you use " +
-							"an older version.");
+							"an older version.\n");
 	}
 
 }

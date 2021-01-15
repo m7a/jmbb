@@ -582,3 +582,7 @@ have a Windows version of CPIO.
    JMBB invocation, a summary of size-changed and vanished files should be
    printed. (Does it make sense to do a 2-nd stat phase to detect _added_ files,
    too?)
+
+### Misc. notes
+
+ * `afio` may replace `cpio` with higher limits.
