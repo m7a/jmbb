@@ -34,7 +34,7 @@ Basic Usage
 ===========
 
 An automatically generated usage information which also conatins “long”
-arguments can be obtained by invoking JMBB with `--help`. 
+arguments can be obtained by invoking JMBB with `--help`.
 
 JMBB is usually run through either a `jmbb` command if it was installed on UNIX
 or Linux or with `java -jar JARFILE` with JARFILE being the `.jar` file
@@ -153,7 +153,7 @@ Compatibility with previous versions
 Short Summary
 :   If you experience unusually long backup update times after a Java and/or OS
     upgrade (with a lot of HDD activity), this update is likely to solve the
-    issue after the 2nd ⚠ backup update done with it.
+    issue after the 2nd (!) backup update done with it.
 
 With this version update, no manual database editing is necessary.
 
@@ -398,8 +398,7 @@ always a security risk: No experts have reviewed the sourcecode and chances are
 bad data can be recovered in case of failure. To mitigate the potential
 negative aspects, JMBB relies on _standard formats_ for all of its features.
 Still, some risks remain. To give an overview about the alternatives which are
-used by more users, this list has been created. If you believe some similar
-application is not on this list, I am eager to hear/read of it.
+used by more users, this list has been created.
 
  * [borgbackup](https://borgbackup.readthedocs.io/en/stable/index.html)
  * [duplicity](http://duplicity.nongnu.org/)
@@ -409,47 +408,47 @@ Here is an informal feature-comparison table for tools that were tested at the
 Ma_Sys.ma. Any tool needs to support create and restore operations. Others are
 listed below:
 
-Feature                                JMBB  Borg
--------------------------------------  ----  ----
-Basic Features                                
-shrink on input-file deletion          Yes   Yes
-UNIX special files and metadata        Yes   Yes
-restore individual files               Yes   Yes
-data encryption                        Yes   Yes
-metadata encryption                    Yes   Yes
-multithreading                         Yes   No
-arbitrarily complex file names         No    Yes?
-input file size irrelevant             No    Yes
-input file number irrelevant           (4)   (4)
-                                              
-Advanced Features                             
-compression                            Yes   Yes
-integrity checks                       Yes   Yes
-data archival                          Yes   No?
-works on slow target storage           Yes   No?
-readable by third-party tools          (2)   No
-Windows support w/o WSL/Cygwin         (3)   No
-retention policy for versions          No    Yes
-deduplication                          No    Yes
-directly upload to remote              No    (1)
-                                              
-Very Advanced Features                        
-mount backup as r/o filesystem         No    Yes
-multiple hosts backup to same target   No    Yes
-cnfigure output file size limit        No    Yes?
-consistent state on interruption       No    Yes?
-incremental metadata store/update      No    No?
-concurrent write to same target        No    No?
-retry on fail mechanisms               No    No?
-GDPR-style data deletion requests      (5)   No?
-integrated cloud storage client        No    No
-data redundancy/bit rot recover        No    No
-crypto-trojan-proof pull-scheme        No    No
-consistenly backup running VMs or DBs  No    No
-process non-persistent live streams    No    No
-REST API for submitting backup inputs  No    No
-REST API for restoring                 No    No
-REST API for monitoring                No    No
+Feature                                 JMBB  Borg
+--------------------------------------  ----  ----
+Basic Features                                 
+shrink on input-file deletion           Yes   Yes
+UNIX special files and metadata         Yes   Yes
+restore individual files                Yes   Yes
+data encryption                         Yes   Yes
+metadata encryption                     Yes   Yes
+multithreading or parallelization       Yes   No
+arbitrarily complex file names          No    Yes?
+input file size irrelevant              No    Yes
+input file number irrelevant            (4)   (4)
+                                               
+Advanced Features                              
+compression                             Yes   Yes
+integrity checks                        Yes   Yes
+data archival                           Yes   No?
+works on slow target storage            Yes   No?
+readable by third-party tools           (2)   No
+Windows support w/o WSL/Cygwin          (3)   No
+retention policy for versions           No    Yes
+deduplication                           No    Yes
+directly upload to remote               No    (1)
+                                               
+Very Advanced Features                         
+mount backup as r/o filesystem          No    Yes
+multiple hosts backup to same target    No    Yes
+process non-persistent live streams     No    Yes
+configure output file size limit        No    Yes?
+consistent state on interruption        No    Yes?
+incremental metadata store/update       No    No?
+concurrent write to same target         No    No?
+retry on fail mechanisms                No    No?
+GDPR-style data deletion requests       (5)   No?
+integrated cloud storage client         No    No
+data redundancy/bit rot recover         No    No
+crypto-trojan-proof pull-scheme         No    No
+consistently backup running VMs or DBs  No    No
+REST API for submitting backup inputs   No    No
+REST API for restoring                  No    No
+REST API for monitoring                 No    No
 
 Yes?/No? := guessed.
 
@@ -489,7 +488,7 @@ accidentally deleted or changed. About once per week, a backup is copied to an
 external CF card. Even less often, a backup of system data and programs is
 copied to an external SSD. Sometimes, a backup is copied to an online-storage
 for additional safety. This backup strategy is implemented using JMBB and
-standard Linux utilities. 
+standard Linux utilities.
 
 ### The backup upon shutdown
 
