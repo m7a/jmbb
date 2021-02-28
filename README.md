@@ -401,8 +401,10 @@ Still, some risks remain. To give an overview about the alternatives which are
 used by more users, this list has been created.
 
  * [borgbackup](https://borgbackup.readthedocs.io/en/stable/index.html)
+ * [Bupstash](https://github.com/andrewchambers/bupstash)
  * [duplicity](http://duplicity.nongnu.org/)
- * non-free license: [Duplicacy](https://duplicacy.com/)
+ * [Kopia](https://kopia.io/)
+ * [ZBackup](http://zbackup.org/)
 
 Here is an informal feature-comparison table for tools that were tested at the
 Ma_Sys.ma. Any tool needs to support create and restore operations. Others are
@@ -413,6 +415,7 @@ Feature                                 JMBB  Borg
 Basic Features                                 
 shrink on input-file deletion           Yes   Yes
 UNIX special files and metadata         Yes   Yes
+read only changed files                 Yes   Yes
 restore individual files                Yes   Yes
 data encryption                         Yes   Yes
 metadata encryption                     Yes   Yes
@@ -482,13 +485,12 @@ section describes how to setup a backup strategy similar to JMBB's author's.
 ## Integration into a Backup Strategy
 
 My backup consists of multiple layers: A quick incremental backup to another
-internal HDD is created on every shutdown. Its main purpose is to record
-changes and allowing to fetch older versions of files if a file was
-accidentally deleted or changed. About once per week, a backup is copied to an
-external CF card. Even less often, a backup of system data and programs is
-copied to an external SSD. Sometimes, a backup is copied to an online-storage
-for additional safety. This backup strategy is implemented using JMBB and
-standard Linux utilities.
+internal HDD is created on every shutdown and an encrypted copy is sent to a
+separate PC for synchronizing the data to a cloud service. Its main purpose is
+to record changes and allowing to fetch older versions of files if a file was
+accidentally deleted or changed. About once per week, a backup of important data
+and programs is copied to an external SSD. This backup strategy is implemented
+using JMBB and standard Linux utilities.
 
 ### The backup upon shutdown
 
@@ -503,7 +505,7 @@ standard Linux utilities.
 ### The system and data backup
 
  * `$ jmbb -d $HOME/backup -c /mnt/backup_system`
- * `$ rsync -av /data/programs /mnt/backup_system` 
+ * `$ rsync -av /data/programs /mnt/backup_system`
 
 ### The online backup.
 
@@ -521,7 +523,7 @@ standard Linux utilities.
 ### The archive backup
 
 On an irregular schedule, new blocks that were collected upon shutdown are
-archived to separate machine. After arriving there, the new integrity check
+archived to separate machine. After arriving there, the integrity check
 feature is used to check the existent and newly created blocks' consistency.
 This archive acts in a pull-based fashion and does not ever overwrite existent
 data to achive some resistance against file corruption caused by malware.
