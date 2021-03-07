@@ -402,9 +402,7 @@ used by more users, this list has been created.
 
  * [borgbackup](https://borgbackup.readthedocs.io/en/stable/index.html)
  * [Bupstash](https://github.com/andrewchambers/bupstash)
- * [duplicity](http://duplicity.nongnu.org/)
  * [Kopia](https://kopia.io/)
- * [ZBackup](http://zbackup.org/)
 
 Here is an informal feature-comparison table for tools that were tested at the
 Ma_Sys.ma. Any tool needs to support create and restore operations. Others are
