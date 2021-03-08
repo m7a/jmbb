@@ -2,19 +2,18 @@ package ma.jmbb;
 
 import java.io.*;
 
-import org.tukaani.xz.XZInputStream;
+class RCPIOMetaExtractor extends RCPIOAbstractMetaExtractor {
 
-class RCPIOMetaExtractor {
-
-	private final File     src;
-	private final RDB      db;
-	private final PrintfIO o;
+	private final File src;
 
 	RCPIOMetaExtractor(File f, RDB db, PrintfIO o) {
-		super();
-		src     = f;
-		this.db = db;
-		this.o  = o;
+		super(db, o);
+		src = f;
+	}
+
+	@Override
+	protected InputStream openSrcFile() throws IOException {
+		return new FileInputStream(src);
 	}
 
 	void run() throws MBBFailureException {
@@ -63,23 +62,6 @@ class RCPIOMetaExtractor {
 				cpioP.getInputStream(), o, src.toPath());
 		reader.start();	
 		return reader;
-	}
-
-	private InputStream createInputStream() throws Exception {
-		return new XZInputStream(
-			new AESCryptInputFilter(db.passwords.getCurrentValue(),
-						new FileInputStream(src))
-		);
-	}
-
-	private void writeDecryptedToCPIO(InputStream in, Process cpioP)
-							throws Exception {
-		OutputStream out = cpioP.getOutputStream();
-		try {
-			StreamUtility.copy(in, null, out);
-		} finally {
-			out.close();
-		}
 	}
 
 }

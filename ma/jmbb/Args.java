@@ -10,9 +10,8 @@ class Args extends AbstractArgs { // TODO z Problem: MaArgs speaks German
 
 	static final String APPLICATION_NAME =
 					"Java Ma_Sys.ma Block Based Backup";
-	static final String APPLICATION_VERSION = "1.0.6";
-	static final String COPYRIGHT_YEARS =
-					"2013, 2014, 2015, 2017, 2019, 2020";
+	static final String APPLICATION_VERSION = "1.0.7";
+	static final String COPYRIGHT_YEARS = "2013-2015, 2017, 2019-2021";
 
 	final Parameter<File>            dstDatabase;
 	final Parameter<List<File>>      srcUpdate;
@@ -25,6 +24,9 @@ class Args extends AbstractArgs { // TODO z Problem: MaArgs speaks German
 	final Parameter<List<File>>      srcRestore;
 	final Parameter<RestorationMode> restorationMode;
 	final Parameter<Integer>         restoreVersion;
+	/** @since JMBB 1.0.7 */
+	final Parameter<Boolean>         findBlocksByFileName;
+	final Parameter<Long>            useMetaBlock;
 
 	final Parameter<File>            editDatabase;
 
@@ -108,6 +110,29 @@ class Args extends AbstractArgs { // TODO z Problem: MaArgs speaks German
 			"newest version is chosen."
 		));
 		restore.add(rvl);
+		ArgumentList rfl = new ArgumentList(null,
+						ArgumentComposition.OPTIONAL);
+		rfl.add(findBlocksByFileName = new Parameter<Boolean>(
+			"find-blocks-by-file-name", 'f', false,
+			new BooleanConverter(),
+			"Enable searching for block's files by their file " +
+			"name rather than expecting the fixed JMBB directory " +
+			"structure. This allows restoring from re-assembled " +
+			"files and archival structures."
+		));
+		restore.add(rfl);
+		ArgumentList rbl = new ArgumentList(null,
+						ArgumentComposition.OPTIONAL);
+		rbl.add(useMetaBlock = new Parameter<Long>(
+			"use-meta-block", 'm',
+			MetaBlockConverter.USE_META_BLOCK_NO,
+			new MetaBlockConverter(),
+			"Use meta block for restoration. Currently, mode " +
+			"`auto` is not implemented. This allows " +
+			"restoring prior backup states as recorded in the " +
+			"meta blocks."
+		));
+		restore.add(rbl);
 		restore.add(srcRestore = new Parameter<List<File>>(
 			"sources", 's', null, new MultipleSourceConverter(),
 			"Sources to restore from (space separated)."

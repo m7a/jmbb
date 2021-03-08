@@ -38,6 +38,9 @@ abstract class AbstractFileScanner extends FailableThread
 		}
 	}
 
+	/**
+	 * Can be invoked directly if not intending to run as separate thread.
+	 */
 	void performSourceDirectoryScan() throws MBBFailureException {
 		try {
 			for(File i: src) {

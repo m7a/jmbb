@@ -11,18 +11,21 @@ class RestorationModeConverter implements TypeConverter<RestorationMode> {
 	public void parse(InputParameter param,
 					Parameter<RestorationMode> result)
 					throws ParameterFormatException {
-		String in  = param.getCurrentValue();
-		if(in.equals("consistent")) {
+		String in = param.getCurrentValue();
+		switch(in) {
+		case "consistent":
 			result.setValue(RestorationMode.RESTORE_CONSISTENT);
-		} else if(in.equals("new")) {
+			break;
+		case "new":
 			result.setValue(
 				RestorationMode.RESTORE_AS_NEW_AS_POSSIBLE);
-		} else if(in.equals("list")) {
+			break;
+		case "list":
 			result.setValue(RestorationMode.LIST_VERSIONS_ONLY);
-		} else {
-			throw new ParameterFormatException(
-				"Unknown restoration mode: \"" + in + "\".", in
-			);
+			break;
+		default:
+			throw new ParameterFormatException("Unknown " +
+				"restoration mode: \"" + in + "\".", in);
 		}
 	}
 

@@ -32,7 +32,9 @@ public class Main {
 				args.dstRestore.getValue(),
 				args.pattern.getValue(),
 				args.restorationMode.getValue(),
-				args.restoreVersion.getValue()
+				args.restoreVersion.getValue(),
+				args.findBlocksByFileName.getValue(),
+				args.useMetaBlock.getValue()
 			);
 			break;
 		case INTEGRITY:
@@ -50,7 +52,8 @@ public class Main {
 	public static void main(String[] args) {
 		Args a = new Args();
 		if(a.parseAndReact(args)) {
-			// Problem: Exits with 1 on legal invocation $0 --help.
+			// Problem: Exits with 1 on some legal invocations like
+			//          --help, -$, etc.
 			System.exit(1);
 		} else {
 			try {

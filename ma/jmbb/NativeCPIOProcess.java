@@ -91,6 +91,15 @@ class NativeCPIOProcess {
 				"cpio", "-i", /* "-c", */ "--quiet",
 				"--to-stdout", "meta.xml"
 			};
+		case RESTORE_META_BLOCK:
+			// TODO z: Not optimal because it may fail in case
+			//         the meta block contains another file called
+			//         db.xml.gz which is not the original meta
+			//         file?
+			return new String [] {
+				"cpio", "-i", /* "-c", */ "--quiet",
+				"--to-stdout", "*/db.xml.gz"
+			};
 		default:
 			throw new NotImplementedException(mode + " N_IMPL");
 		}

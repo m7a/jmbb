@@ -80,6 +80,19 @@ class DBBlock {
 		obsoletedInTheFirstPlace = true;
 	}
 
+	/**
+	 * minimalistic constructor used in certain restoration scenarios
+	 */
+	DBBlock(Path osFile, long id) {
+		super();
+		this.osFile  = osFile.toAbsolutePath();
+		this.id      = id;
+		passwordId   = -1;
+		blocksizeKiB = -1;
+		timestamp    = -1;
+		files        = new ArrayList<DBFile>();
+	} 
+
 	private static long parseID(Attributes attrs) {
 		return parseID(attrs.getValue("id"));
 	}

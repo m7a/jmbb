@@ -17,24 +17,45 @@ class Restorer {
 	private final RestorationMode mode;
 	private final int             version;
 
+	/** @since JMBB 1.0.7 */
+	private final boolean         findBlocksByFileName;
+	/** @since JMBB 1.0.7 */
+	private final long            useMetaBlock;
+
 	Restorer(PrintfIO o, List<File> src, File dst, String pattern,
-					RestorationMode mode, int version) {
+			RestorationMode mode, int version,
+			boolean findBlocksByFileName, long useMetaBlock) {
 		super();
-		this.o       = o;
-		this.src     = src;
-		this.dst     = dst;
-		this.pattern = pattern;
-		this.mode    = mode;
-		this.version = version;
+		this.o                    = o;
+		this.src                  = src;
+		this.dst                  = dst;
+		this.pattern              = pattern;
+		this.mode                 = mode;
+		this.version              = version;
+		this.findBlocksByFileName = findBlocksByFileName;
+		this.useMetaBlock         = useMetaBlock;
 	}
 
 	void run() throws MBBFailureException {
 		mkdst();
 
 		RDB[] sourceDBs = createDBForEachSource();
-		RDB main = mergeDBs(sourceDBs);
+		RDB preliminaryMain = mergeDBs(sourceDBs);
 
-		restoreFromDB(main);
+		if(useMetaBlock == MetaBlockConverter.USE_META_BLOCK_NO) {
+			restoreFromDB(preliminaryMain);
+		} else {
+			RDB newMain = new RCPIOMetaBlockExtractor(useMetaBlock,
+				preliminaryMain, o).readDatabaseFromMetaBlock();
+			// Use low level merge function to only merge such
+			// blocks that are already known in `newMain` db.
+			// This achieves consistent restores. Another option
+			// would be to call the fully-fledged mergeDBs()
+			// again, but this is not implemented yet.
+			RAllBlockMap secondMerge = new RAllBlockMap(newMain);
+			secondMerge.merge(preliminaryMain);
+			restoreFromDB(newMain);
+		}
 	}
 
 	private void mkdst() throws MBBFailureException {
@@ -45,7 +66,8 @@ class Restorer {
 	}
 
 	private RDB[] createDBForEachSource() throws MBBFailureException {
-		return new RDBCreator(o, src).createDBForEachSource();
+		return new RDBCreator(o, src, findBlocksByFileName).
+							createDBForEachSource();
 	}
 
 	private RDB mergeDBs(RDB[] sourceDBs) throws MBBFailureException {

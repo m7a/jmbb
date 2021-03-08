@@ -23,6 +23,14 @@ class RAllBlockMap {
 		deltaBlocks = new TreeMap<Long, DBBlock>();
 	}
 
+	/**
+	 * Merges only the blocks that already exist in the current block map.
+	 * This allows updating file names to point to paths that exist if they
+	 * do not point to an existing file yet.
+	 *
+	 * Absent blocks are handled separately and according to restoration
+	 * policies...
+	 */
 	void merge(DB db) {
 		for(DBBlock i: db.blocks) {
 			if(blockExists(i)) {

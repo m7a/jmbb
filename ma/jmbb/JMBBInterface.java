@@ -24,9 +24,11 @@ public class JMBBInterface {
 	}
 
 	public void restore(List<File> src, File dst, String pattern,
-					RestorationMode mode, int version)
-						throws MBBFailureException {
-		new Restorer(o, src, dst, pattern, mode, version).run();
+				RestorationMode mode, int version,
+				boolean findBlocksByFileName, long useMetaBlock)
+				throws MBBFailureException {
+		new Restorer(o, src, dst, pattern, mode, version,
+				findBlocksByFileName, useMetaBlock).run();
 	}
 
 	public void edit(File db) throws MBBFailureException {

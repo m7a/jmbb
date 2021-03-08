@@ -1,9 +1,7 @@
 package ma.jmbb;
 
 import java.io.*;
-
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Responsible for creating database objects from various forms of source data.
@@ -12,11 +10,13 @@ class RDBCreator {
 
 	private final PrintfIO o;
 	private final List<File> src;
+	private final boolean findBlocksByFileName;
 
-	RDBCreator(PrintfIO io, List<File> src) {
+	RDBCreator(PrintfIO io, List<File> src, boolean findBlocksByFileName) {
 		super();
 		o = io;
 		this.src = src;
+		this.findBlocksByFileName = findBlocksByFileName;
 	}
 
 	RDB[] createDBForEachSource() throws MBBFailureException {
@@ -42,12 +42,24 @@ class RDBCreator {
 
 	private void createDBFromDirectoryStructure(File root, RDB pseudoDB)
 						throws MBBFailureException {
-		try {
-			pseudoDB.passwords.readInteractively(o);
-		} catch(IOException ex) {
-			throw new MBBFailureException(ex);
+		if(findBlocksByFileName) {
+			// TODO NEW2021 IMPLEMENT THIS. ONCE IT WORKS NEED TO RENAME IRFileScanner and IRBlock to something more neutral to identify it as restore+integrity report relevant
+			Map<Long,IRBlock> results = new TreeMap<Long,IRBlock>();
+			IRFileScanner scanner = new IRFileScanner(o,
+						Arrays.asList(root), results);
+			scanner.performSourceDirectoryScan();
+			for(IRBlock irb: results.values()) {
+				pseudoDB.addRestorationBlock(new DBBlock(
+							irb.getFile(), irb.id));
+			}
+		} else {
+			try {
+				pseudoDB.passwords.readInteractively(o);
+			} catch(IOException ex) {
+				throw new MBBFailureException(ex);
+			}
+			rparseFileIntoDB(root, pseudoDB);
 		}
-		rparseFileIntoDB(root, pseudoDB);
 	}
 
 	// Use good old java.io.File interface (good enough for this very task).

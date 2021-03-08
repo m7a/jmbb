@@ -59,6 +59,11 @@ class IRBlock implements Runnable {
 		files.add(file);
 	}
 
+	/** to be used only for restoration purposes! */
+	Path getFile() {
+		return files.get(0);
+	}
+
 	void assignMetadataFromDB(DB db) throws MBBFailureException {
 		// Assign block from database if possible slow linear search...
 		DBBlock block = null;
