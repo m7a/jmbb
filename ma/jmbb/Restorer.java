@@ -4,9 +4,6 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import ma.tools2.util.NotImplementedException;
 
@@ -171,25 +168,29 @@ class Restorer {
 						throws MBBFailureException {
 		Map<Long, RGroup> tab = newTableOfFilesGroupBlocks(entries,
 							considerObsolete);
-		ExecutorService pool = Executors.newFixedThreadPool(
-					Multithreading.determineThreadCount());
+
+		// It seemed to be a good idea to run this in paralle, but CPIO
+		// does not want to do it (gives errors for file exists and no
+		// such file or directory during restoration and restored data
+		// is missing files). Should we find a backend process that
+		// _can_ run in parallel, one might re-enable this code...
+
+		//ExecutorService pool = Executors.newFixedThreadPool(
+		//			Multithreading.determineThreadCount());
 
 		for(RGroup i: tab.values()) {
-			pool.execute(new RCpioRestorer(db, dst, i, o));
+			//pool.execute(new RCpioRestorer(db, dst, i, o));
+			new RCpioRestorer(db, dst, i, o).run();
 		}
 
-		pool.shutdown();
-		Multithreading.awaitPoolTermination(pool);
+		//pool.shutdown();
+		//Multithreading.awaitPoolTermination(pool);
 	}
 
 	private static Map<Long, RGroup> newTableOfFilesGroupBlocks(
 						Iterator<REntry> entries,
 						boolean considerObsolete) {
 		// TreeMap => sort by block id.
-		// TODO z Is this sort order strictly necessary?
-		//        If yes, parallelzation needs to be enhanced by a
-		//        means to detect "conflicting" retores and keep them
-		//        in sequence...
 		Map<Long, RGroup> retTable = new TreeMap<Long, RGroup>();
 
 		while(entries.hasNext())
