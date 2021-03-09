@@ -11,7 +11,7 @@ class EditListPasswords extends EditorCommand {
 	}
 
 	public String getDescription() {
-		return "Display all passwords in plain text";
+		return "Displays all passwords in plain text";
 	}
 
 	public void call(String[] args) throws Exception {

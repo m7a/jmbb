@@ -55,6 +55,7 @@ class Editor {
 			new EditEmpty(o, db),
 			new EditMissing(o, db),
 			new EditListPasswords(o, db),
+			new EditListMetaBlocks(o, db),
 			new EditPassword(o, db),
 			new EditRename(o, db),
 			new EditSave(o, db),

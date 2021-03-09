@@ -1,3 +1,9 @@
+mdvl-jmbb (1.0.6) stable; urgency=medium
+
+  * Update JMBB to 1.0.7 -- improved restore functions and performance.
+
+ -- Linux-Fan, Ma_Sys.ma <Ma_Sys.ma@web.de>  Tue, 09 Mar 2021 22:20:14 +0100
+
 mdvl-jmbb (1.0.5) stable; urgency=medium
 
   * Make xmx-memory dynamically dependent on number of cores.

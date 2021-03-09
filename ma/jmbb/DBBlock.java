@@ -315,9 +315,7 @@ class DBBlock {
 	}
 
 	void print(PrintfIO o) {
-		o.printf("DBBlock %s, size %d KiB, password %d, created %s\n",
-			formatXMLBlockId(), outwardSize / 1024, passwordId,
-			RDateFormatter.format(timestamp));
+		printShort(o);
 		long n = 0;
 		for(DBFile i: files) {
 			o.printf("%s\n", i.getPath());
@@ -325,6 +323,12 @@ class DBBlock {
 			n++;
 		}
 		o.printf("This block contains %d files.\n", n);
+	}
+
+	void printShort(PrintfIO o) {
+		o.printf("DBBlock %6s  size %6d KiB  password %d  created %s\n",
+			formatXMLBlockId(), outwardSize / 1024, passwordId,
+			RDateFormatter.format(timestamp));
 	}
 
 	static String formatBlockIDNice(long blockID) {
