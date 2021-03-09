@@ -1,29 +1,42 @@
 package ma.jmbb;
 
 import java.io.*;
-
 import java.nio.file.Files;
-
 import java.security.MessageDigest;
-
 import java.util.Arrays;
 
 import org.tukaani.xz.XZInputStream;
 
-class RCpioRestorer {
+/**
+ * Implements Runnable to act as a task that can be submitted to a
+ * ThreadPoolExecutor
+ */
+class RCpioRestorer implements Runnable {
 
-	private final DB     db;
-	private final File   dst;
-	private final RGroup grp;
+	private final DB       db;
+	private final File     dst;
+	private final RGroup   grp;
+	private final PrintfIO o;
 
-	RCpioRestorer(DB db, File dst, RGroup group) {
+	RCpioRestorer(DB db, File dst, RGroup group, PrintfIO o) {
 		super();
 		this.db  = db;
 		this.dst = dst;
 		grp      = group;
+		this.o   = o;
 	}
 
-	void run() throws MBBFailureException {
+	@Override
+	public void run() {
+		try {
+			runFailable();
+		} catch(MBBFailureException ex) {
+			o.edprintf(ex, "Unable to restore group of " +
+					"block %s.\n", grp.formatBlockId());
+		}
+	}
+
+	private void runFailable() throws MBBFailureException {
 		try {
 			File list = createListFile();
 			try {
@@ -39,7 +52,8 @@ class RCpioRestorer {
 	}
 
 	private File createListFile() throws IOException {
-		File listF = File.createTempFile("ma_jmbb_restore_", ".txt");
+		File listF = File.createTempFile("jmbb_restore_" + hashCode(),
+									".txt");
 		BufferedWriter out = new BufferedWriter(new FileWriter(listF));
 		try {
 			for(DBFile i: grp.getFiles()) {
@@ -96,13 +110,14 @@ class RCpioRestorer {
 
 	// analogous to BCCpioProcessor.createOutputStream(Path)
 	private InputStream createInputStream() throws Exception {
-		return new XZInputStream(
-			Security.newAESInputFilter(
-				db.passwords.get(grp.getBlock().passwordId
-								).password,
-				Files.newInputStream(grp.getBlock().getFile())
-			)
-		);
+		// TODO z password choice is a little hacky but has to cope
+		//        with the possibility that it was live entered by the
+		//        user.
+		DBPassword dpw = db.passwords.get(grp.getBlock().passwordId);
+		String pw = (dpw == null)? db.passwords.getCurrentValue():
+								dpw.password;
+		return new XZInputStream(Security.newAESInputFilter(pw,
+			Files.newInputStream(grp.getBlock().getFile())));
 	}
 
 }

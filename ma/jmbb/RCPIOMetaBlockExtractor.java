@@ -67,6 +67,7 @@ class RCPIOMetaBlockExtractor extends RCPIOAbstractMetaExtractor {
 		}
 
 		cpio.throwPossibleFailure();
+		ret.initializeKnownFilesBlocks();
 		return ret;
 	}
 

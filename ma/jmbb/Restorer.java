@@ -1,10 +1,12 @@
 package ma.jmbb;
 
 import java.io.File;
-
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import ma.tools2.util.NotImplementedException;
 
@@ -169,22 +171,25 @@ class Restorer {
 						throws MBBFailureException {
 		Map<Long, RGroup> tab = newTableOfFilesGroupBlocks(entries,
 							considerObsolete);
+		ExecutorService pool = Executors.newFixedThreadPool(
+					Multithreading.determineThreadCount());
 
 		for(RGroup i: tab.values()) {
-			try {
-				i.restore(db, dst);
-			} catch(MBBFailureException ex) {
-				o.edprintf(ex, "Unable to restore group of " +
-						"block %s.\n",
-						i.formatBlockId());
-			}
+			pool.execute(new RCpioRestorer(db, dst, i, o));
 		}
+
+		pool.shutdown();
+		Multithreading.awaitPoolTermination(pool);
 	}
 
 	private static Map<Long, RGroup> newTableOfFilesGroupBlocks(
 						Iterator<REntry> entries,
 						boolean considerObsolete) {
 		// TreeMap => sort by block id.
+		// TODO z Is this sort order strictly necessary?
+		//        If yes, parallelzation needs to be enhanced by a
+		//        means to detect "conflicting" retores and keep them
+		//        in sequence...
 		Map<Long, RGroup> retTable = new TreeMap<Long, RGroup>();
 
 		while(entries.hasNext())

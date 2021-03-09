@@ -2,13 +2,21 @@ package ma.jmbb;
 
 import java.io.*;
 
-class RCPIOMetaExtractor extends RCPIOAbstractMetaExtractor {
+class RCPIOMetaExtractor extends RCPIOAbstractMetaExtractor
+							implements Runnable {
 
 	private final File src;
+	private DBBlock blk;
 
 	RCPIOMetaExtractor(File f, RDB db, PrintfIO o) {
 		super(db, o);
 		src = f;
+		blk = null;
+	}
+
+	/** @return null if there were errors (already printed) */
+	DBBlock getBlock() {
+		return blk;
 	}
 
 	@Override
@@ -16,10 +24,19 @@ class RCPIOMetaExtractor extends RCPIOAbstractMetaExtractor {
 		return new FileInputStream(src);
 	}
 
-	void run() throws MBBFailureException {
+	@Override
+	public void run() {
 		try {
-			DBBlock blk = createBlockObject();
-			db.addRestorationBlock(blk);
+			runFailable();
+		} catch(MBBFailureException ex) {
+			o.edprintf(ex, "Unable to parse file \"%s\" into DB.\n",
+							src.getAbsolutePath());
+		}
+	}
+
+	private void runFailable() throws MBBFailureException {
+		try {
+			createBlockObject();
 		} catch(MBBFailureException ex) {
 			throw ex;
 		} catch(Exception ex) {
@@ -27,22 +44,20 @@ class RCPIOMetaExtractor extends RCPIOAbstractMetaExtractor {
 		}
 	}
 
-	private DBBlock createBlockObject() throws Exception {
+	private void createBlockObject() throws Exception {
 		NativeCPIOProcess cpio = new NativeCPIOProcess(null,
 						NativeCPIOMode.RESTORE_META);
-		DBBlock ret;
 		cpio.open();
 		try {
-			ret = processCPIO(cpio);
+			processCPIO(cpio);
 		} finally {
 			cpio.close();
 		}
 
 		cpio.throwPossibleFailure();
-		return ret;
 	}
 
-	private DBBlock processCPIO(NativeCPIOProcess cpio) throws Exception {
+	private void processCPIO(NativeCPIOProcess cpio) throws Exception {
 		Process cpioP = cpio.getUnderlyingProcess();
 		RCPIOMetaReader r = createCPIOReader(cpioP);
 
@@ -51,7 +66,7 @@ class RCPIOMetaExtractor extends RCPIOAbstractMetaExtractor {
 			writeDecryptedToCPIO(in, cpioP);
 			r.join();
 			r.throwPossibleFailure();
-			return r.getResult();
+			blk = r.getResult();
 		} finally {
 			in.close();
 		}

@@ -61,8 +61,8 @@ class IntegrityReport {
 		}
 
 		// == Stage 2: Process ==
-		ExecutorService pool = Executors.newFixedThreadPool(Runtime.
-					getRuntime().availableProcessors());
+		ExecutorService pool = Executors.newFixedThreadPool(
+					Multithreading.determineThreadCount());
 		for(IRBlock block: results.values()) {
 			block.assignMetadataFromDB(db);
 			if(block.isProcessingRequired()) {
@@ -83,13 +83,7 @@ class IntegrityReport {
 		}
 
 		// synchronize
-		try {
-			while(!pool.isTerminated()) {
-				pool.awaitTermination(300, TimeUnit.SECONDS);
-			}
-		} catch(InterruptedException ex) {
-			throw new MBBFailureException(ex);
-		}
+		Multithreading.awaitPoolTermination(pool);
 
 		// == Stage 3: Print results ==
 		int[] counters = new int[IRStatus.values().length];

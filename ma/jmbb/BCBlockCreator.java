@@ -24,7 +24,7 @@ class BCBlockCreator {
 		this.o  = o;
 		this.db = db;
 
-		int procCount = determineThreadCount();
+		int procCount = Multithreading.determineThreadCount();
 
 		proc = new BCNativeBlockCreatorProcess[procCount];
 		tmp = new Path[proc.length];
@@ -38,23 +38,6 @@ class BCBlockCreator {
 		}
 
 		removeMetaFilesFromObsoletionList = false;
-	}
-
-	private int determineThreadCount() throws MBBFailureException {
-		String envProc = System.getenv("JMBB_THREADS");
-		if(envProc == null) {
-			return Runtime.getRuntime().availableProcessors();
-		} else {
-			try {
-				return Integer.parseInt(envProc);
-			} catch(NumberFormatException ex) {
-				throw new MBBFailureException(
-					"Invalid format of JMBB_THREADS " +
-					"environment variable. Integer " +
-					"required.", ex
-				);
-			}
-		}
 	}
 
 	void scheduleCreation(List<BCChangedFile> cnt, long inwardSize)

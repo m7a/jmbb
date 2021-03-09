@@ -1,9 +1,7 @@
 package ma.jmbb;
 
 import java.io.*;
-
 import java.nio.file.Files;
-
 import java.util.ArrayList;
 
 class RGroup {
@@ -19,11 +17,6 @@ class RGroup {
 
 	void add(DBFile f) {
 		files.add(f);
-	}
-
-	void restore(DB db, File dst) throws MBBFailureException {
-		RCpioRestorer r = new RCpioRestorer(db, dst, this);
-		r.run();
 	}
 
 	String formatBlockId() {

@@ -2,6 +2,7 @@ package ma.jmbb;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * Responsible for creating database objects from various forms of source data.
@@ -42,36 +43,77 @@ class RDBCreator {
 
 	private void createDBFromDirectoryStructure(File root, RDB pseudoDB)
 						throws MBBFailureException {
+		pseudoDB.initializeKnownFilesBlocks(); // will be empty...
 		if(findBlocksByFileName) {
-			// TODO NEW2021 IMPLEMENT THIS. ONCE IT WORKS NEED TO RENAME IRFileScanner and IRBlock to something more neutral to identify it as restore+integrity report relevant
-			Map<Long,IRBlock> results = new TreeMap<Long,IRBlock>();
-			IRFileScanner scanner = new IRFileScanner(o,
-						Arrays.asList(root), results);
-			scanner.performSourceDirectoryScan();
-			for(IRBlock irb: results.values()) {
-				pseudoDB.addRestorationBlock(new DBBlock(
-							irb.getFile(), irb.id));
-			}
+			createDBFromFileNames(root, pseudoDB);
 		} else {
-			try {
-				pseudoDB.passwords.readInteractively(o);
-			} catch(IOException ex) {
-				throw new MBBFailureException(ex);
-			}
-			rparseFileIntoDB(root, pseudoDB);
+			createDBFromBlockContents(root, pseudoDB);
 		}
 	}
 
-	// Use good old java.io.File interface (good enough for this very task).
-	private void rparseFileIntoDB(File f, RDB db)
+	private void createDBFromFileNames(File root, RDB pseudoDB)
 						throws MBBFailureException {
+		// As of now uses functions introducted with the integrity
+		// report.
+		// TODO z It might make sense to somehow reflect in their names
+		//        that these parts are shared accross Integrity/Restore
+		Map<Long,IRBlock> results = new TreeMap<Long,IRBlock>();
+		IRFileScanner scanner = new IRFileScanner(o,
+						Arrays.asList(root), results);
+		scanner.performSourceDirectoryScan();
+		for(IRBlock irb: results.values()) {
+			pseudoDB.addRestorationBlock(new DBBlock(irb.getFile(),
+								irb.id));
+		}
+	}
+
+	private void createDBFromBlockContents(File root, RDB pseudoDB)
+						throws MBBFailureException {
+		try {
+			pseudoDB.passwords.readInteractively(o);
+		} catch(IOException ex) {
+			throw new MBBFailureException(ex);
+		}
+		ExecutorService pool = Executors.newFixedThreadPool(
+					Multithreading.determineThreadCount());
+		ArrayList<Future<RCPIOMetaExtractor>> results =
+				new ArrayList<Future<RCPIOMetaExtractor>>();
+		rparseFileIntoDB(root, pseudoDB, pool, results);
+		pool.shutdown();
+		try {
+			for(Future<RCPIOMetaExtractor> fr: results) {
+				RCPIOMetaExtractor r = fr.get();
+				DBBlock b = r.getBlock();
+				// if it is null, the error message was already
+				// printed, otherwise processing was successful.
+				if(b != null) {
+					pseudoDB.addRestorationBlock(b);
+				}
+			}
+		} catch(ExecutionException|InterruptedException ex) {
+			// ExecutionException is fatal because run() is expected
+			// to cover all possible failures except those which
+			// cannot be anticipated and should hence terminate the
+			// whole process for safety. Similarly,
+			// InterruptedExceptions are not expected at this point.
+			throw new MBBFailureException(ex);
+		}
+		Multithreading.awaitPoolTermination(pool);
+	}
+
+	// Use good old java.io.File interface (good enough for this task).
+	private void rparseFileIntoDB(File f, RDB db, ExecutorService pool,
+				List<Future<RCPIOMetaExtractor>> results)
+				throws MBBFailureException {
 		if(f.isDirectory()) {
 			File[] sub = f.listFiles();
 			for(File i: sub) {
-				rparseFileIntoDB(i, db);
+				rparseFileIntoDB(i, db, pool, results);
 			}
 		} else if(f.isFile()) {
-			parseFileIntoDB(f, db);
+			RCPIOMetaExtractor extr =
+					new RCPIOMetaExtractor(f, db, o);
+			results.add(pool.submit(extr, extr));
 		} else {
 			throw new MBBFailureException(
 				"Can not scan file structures which contain " +
@@ -79,15 +121,6 @@ class RDBCreator {
 				"directories. Suspicious part of the " +
 				"directory structure: " + f.getAbsolutePath()
 			);
-		}
-	}
-
-	private void parseFileIntoDB(File f, RDB db) {
-		try {
-			new RCPIOMetaExtractor(f, db, o).run();
-		} catch(MBBFailureException ex) {
-			o.edprintf(ex, "Unable to parse file \"%s\" into DB.\n",
-							f.getAbsolutePath());
 		}
 	}
 
