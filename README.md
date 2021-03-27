@@ -417,6 +417,7 @@ read only changed files                 Yes   Yes
 restore individual files                Yes   Yes
 data encryption                         Yes   Yes
 metadata encryption                     Yes   Yes
+portable across file systems            Yes   Yes
 multithreading or parallelization       Yes   No
 arbitrarily complex file names          No    Yes?
 input file size irrelevant              No    Yes
