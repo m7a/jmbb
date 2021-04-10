@@ -398,81 +398,10 @@ always a security risk: No experts have reviewed the sourcecode and chances are
 bad data can be recovered in case of failure. To mitigate the potential
 negative aspects, JMBB relies on _standard formats_ for all of its features.
 Still, some risks remain. To give an overview about the alternatives which are
-used by more users, this list has been created.
+used by more users, there used to be a list of alternatives here.
 
- * [borgbackup](https://borgbackup.readthedocs.io/en/stable/index.html)
- * [Bupstash](https://github.com/andrewchambers/bupstash)
- * [Kopia](https://kopia.io/)
-
-Here is an informal feature-comparison table for tools that were tested at the
-Ma_Sys.ma. Any tool needs to support create and restore operations. Others are
-listed below:
-
-Feature                                 JMBB  Borg
---------------------------------------  ----  ----
-Basic Features                                 
-shrink on input-file deletion           Yes   Yes
-UNIX special files and metadata         Yes   Yes
-read only changed files                 Yes   Yes
-restore individual files                Yes   Yes
-data encryption                         Yes   Yes
-metadata encryption                     Yes   Yes
-portable across file systems            Yes   Yes
-multithreading or parallelization       Yes   No
-arbitrarily complex file names          No    Yes?
-input file size irrelevant              No    Yes
-input file number irrelevant            (4)   (4)
-                                               
-Advanced Features                              
-compression                             Yes   Yes
-integrity checks                        Yes   Yes
-data archival                           Yes   No?
-works on slow target storage            Yes   No?
-readable by third-party tools           (2)   No
-Windows support w/o WSL/Cygwin          (3)   No
-retention policy for versions           No    Yes
-deduplication                           No    Yes
-directly upload to remote               No    (1)
-                                               
-Very Advanced Features                         
-mount backup as r/o filesystem          No    Yes
-multiple hosts backup to same target    No    Yes
-process non-persistent live streams     No    Yes
-configure output file size limit        No    Yes?
-consistent state on interruption        No    Yes?
-incremental metadata store/update       No    No?
-concurrent write to same target         No    No?
-retry on fail mechanisms                No    No?
-GDPR-style data deletion requests       (5)   No?
-integrated cloud storage client         No    No
-data redundancy/bit rot recover         No    No
-crypto-trojan-proof pull-scheme         No    No
-consistently backup running VMs or DBs  No    No
-REST API for submitting backup inputs   No    No
-REST API for restoring                  No    No
-REST API for monitoring                 No    No
-
-Yes?/No? := guessed.
-
-### Footnotes
-
- 1. Yes, but only to Borg-specific server.
- 2. Yes, but practically limited to restoration of individual files.
- 3. Yes, but only for restoring with a `cpio.exe`.
- 4. Both tools' capability for many files is limited. Borg is limited by its
-    sequential approach, JMBB is limited by loading its metadata completely into
-    RAM.
- 5. Yes, but: Requires obsoleting all related blocks manually by means of
-    `jmbb -e` and `obsolete id`. Impractical for anything more than a few
-    requests per year. Metadata is retained. Archival storage not affected
-    (if used).
-
-The ideal backup tool should support all of _Basic Features_ and
-_Advanced Features_.
-
-The table is presented such that “Yes” means “good” and “No” means “bad”. Thus
-there are negated lines like _input file size irrelevant_ because if the input
-file size is limited/relevant that's bad and hence “No” is given in the table.
+Since 2021/04/10, a new and more exhaustive analysis of the alternatives
+exists under [backup_tests_borg_bupstash_kopia(37)](../37/backup_tests_borg_bupstash_kopia.xhtml).
 
 Advanced Usage
 ==============
