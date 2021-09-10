@@ -182,8 +182,8 @@ Tables
 Feature         Implementation
 --------------  --------------------------------------------------------
 Archiving       GNU CPIO "Portable ASCII Format" (filesize limit: 8 GiB)
-Compression     XZ For Java url(http://tukaani.org/xz/java.html)
-Encryption      AESCrypt AES256, see copyright url(http://aescrypt.com/)
+Compression     XZ For Java <http://tukaani.org/xz/java.html>
+Encryption      AESCrypt AES256, see copyright <http://aescrypt.com/>
 Database        GZipped XML with DTD included in JMBB JAR
 File traversal  Java NIO for backup source directory traversal
 
@@ -195,7 +195,7 @@ Variable        Description
 `JMBB_XZLEVEL`  Changes the XZ compression level from 1 to 9, default: 8
 `JMBB_WINDOWS`  `true` means warnings about failed `stat()`s are hidden
 
-## JMBB performace comparison table
+## JMBB performance comparison table
 
 Command                            User/s  Sys/s  Real/s  MaxRes/k  Comp/O
 ---------------------------------  ------  -----  ------  --------  ------
@@ -204,7 +204,7 @@ Command                            User/s  Sys/s  Real/s  MaxRes/k  Comp/O
 `jmbb -r DST -s BAK`               162     15     175     478300    n/a
 `7z x -so BAK p* | tar -C DST -x`  38      4      53      68300     n/a
 
-### Command aliases for the JMBB performace comparison table 
+### Command aliases for the JMBB performance comparison table 
 
  * `p* := -ptestwort`
  * `7z* := 7z a -t7z -m0=lzma2 -mx=9 -mfb=64 -md=64m -ms=2g -l p* -si -bd`
