@@ -6,13 +6,14 @@ keywords: ["jmbb", "backup", "readme"]
 lang: en-US
 x-masysma-version: 1.0.3
 date: 2014/08/06 01:16:35
+author: ["Linux-Fan, Ma_Sys.ma (Ma_Sys.ma@web.de)"]
 x-masysma-copyright: |
   Copyright (c) 2013, 2014, 2015, 2017, 2019, 2020 Ma_Sys.ma.
   For further info send an e-mail to Ma_Sys.ma@web.de.
   This program's encryption functions are modifications of
   Java AESCrypt, Copyright 2008 Vócali Sistemas Inteligentes.
   For further information refer to http://www.aescrypt.com/java_aes_crypt.html.
-x-masysma-website: https://masysma.lima-city.de/32/jmbb.xhtml
+x-masysma-website: https://masysma.net/32/jmbb.xhtml
 x-masysma-repository: https://www.github.com/m7a/lo-jmbb
 x-masysma-owned: 1
 ---
@@ -285,7 +286,7 @@ Intel Core i7-4770 with 24 GiB of RAM and a software RAID 1 of SATA HDDs.
 	[ ok ]  active,   verified               3098
 	[ ok ]  obsolete, verified               8942
 	[ ok ]  obsolete, absent                 915
-		-- SUM                           12955
+	        -- SUM                           12955
 	[FAIL]  active,   absent                 269
 
 	Summary
